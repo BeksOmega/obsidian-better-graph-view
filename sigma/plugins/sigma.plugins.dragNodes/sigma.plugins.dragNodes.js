@@ -61,12 +61,12 @@
       _isMouseOverCanvas = false,
       _drag = false;
 
-    /*if (renderer instanceof sigma.renderers.svg) {
+    if (sigma.renderers.svg && renderer instanceof sigma.renderers.svg) {
         _mouse = renderer.container.firstChild;
-    }*/
+    }
 
     // It removes the initial substring ('read_') if it's a WegGL renderer.
-    if (renderer instanceof sigma.renderers.webgl) {
+    if (sigma.renderers.webgl && renderer instanceof sigma.renderers.webgl) {
       _prefix = renderer.options.prefix.substr(5);
     } else {
       _prefix = renderer.options.prefix;
@@ -89,7 +89,7 @@
       _body.removeEventListener('mouseup', nodeMouseUp);
       _renderer.unbind('overNode', nodeMouseOver);
       _renderer.unbind('outNode', treatOutNode);
-    }
+    };
 
     // Calculates the global offset of the given element more accurately than
     // element.offsetTop and element.offsetLeft.
@@ -102,7 +102,7 @@
         left: element.getBoundingClientRect().left + getCssProperty('padding-left'),
         top: element.getBoundingClientRect().top + getCssProperty('padding-top')
       };
-    };
+    }
 
     function click(event) {
       // event triggered at the end of the click
@@ -113,7 +113,7 @@
       if (!_hoverStack.length) {
         _node = null;
       }
-    };
+    }
 
     function nodeMouseOver(event) {
       // Don't treat the node if it is already registered

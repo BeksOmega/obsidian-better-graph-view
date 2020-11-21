@@ -24,7 +24,6 @@
     if (typeof options !== 'object')
       throw 'sigma.renderers.canvas: Wrong arguments.';
 
-    console.log(HTMLElement);
     if (!(options.container instanceof HTMLElement))
       throw 'Container not found.';
 

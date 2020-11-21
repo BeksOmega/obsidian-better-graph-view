@@ -1,95 +1,82 @@
-import {App, Modal, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf} from 'obsidian';
-import TestView from "./view";
+/**
+ * @license
+ * Copyright 2020 Obsidian Better Graph View
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-export default class MyPlugin extends Plugin {
+/**
+ * @fileoverview Class for the better graph view plugin.
+ * @author bekawestberg@gmail.com (Beka Westberg)
+ */
+'use strict';
+
+
+import { Plugin} from 'obsidian';
+import BetterGraphView from "./view";
+import { VIEW_TYPE_BETTER_GRAPH } from "./constants";
+
+
+export default class BetterGraphPlugin extends Plugin {
+
+  /**
+   * Called when the plugin is first loaded. Handles registering things like
+   * views, commands, etc.
+   */
   onload() {
-    console.log('loading plugin');
-
-    this.addRibbonIcon('dice', 'Sample Plugin', () => {
-      this.initLeaf();
-    });
-
-    this.addStatusBarItem().setText('Status Bar Text');
+    this.registerView(
+        VIEW_TYPE_BETTER_GRAPH,
+        (leaf) => new BetterGraphView(leaf));
 
     this.addCommand({
-      id: 'open-sample-modal',
-      name: 'Open Sample Modal',
-      // callback: () => {
-      // 	console.log('Simple Callback');
-      // },
+      id: 'open-better-graph',
+      name: 'Open better graph view',
+      /**
+       * Either returns whether the command is enabled (no better graph exists),
+       * or opens the better graph, depending on the value of checking.
+       * @param {boolean} checking True if this command is being called to check
+       *     if it is enabled.
+       * @return {boolean} True if checking and no better graph exists, false
+       *     otherwise.
+       */
       checkCallback: (checking) => {
-        let leaf = this.app.workspace.activeLeaf;
-        if (leaf) {
-          if (!checking) {
-            new SampleModal(this.app).open();
-          }
-          return true;
+        if (checking) {
+          return !this.betterGraphExists();
         }
-        return false;
-      }
+        this.createBetterGraph();
+      },
     });
-
-    this.addSettingTab(new SampleSettingTab(this.app, this));
-
-    this.registerEvent(this.app.on('codemirror', (cm) => {
-      console.log('codemirror', cm);
-    }));
-
-    this.registerDomEvent(document, 'click', (evt) => {
-      console.log('click', evt);
-    });
-
-    this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-
-    this.registerView('testview', (leaf) => new TestView(leaf));
   }
 
-  initLeaf() {
-    if (this.app.workspace.getLeavesOfType('testview').length) {
+  /**
+   * Called when the plugin is unloaded. Handles any cleanup like detaching
+   * existing graph views.
+   */
+  onunload() {
+    this.app.workspace
+        .getLeavesOfType(VIEW_TYPE_BETTER_GRAPH)
+        .forEach((leaf) => leaf.detach());
+  }
+
+  /**
+   * Creates the better graph view in place of the focused leaf, if no better
+   * graph view already exists.
+   */
+  createBetterGraph() {
+    // TODO: Might want to allow multiple instances in the future.
+    if (this.betterGraphExists()) {
       return;
     }
-    this.app.workspace.getRightLeaf(false).setViewState({
-      type: 'testview',
+    this.app.workspace.getMostRecentLeaf().setViewState({
+      type: VIEW_TYPE_BETTER_GRAPH,
     });
   }
 
-  onunload() {
-    console.log('unloading plugin');
-  }
-}
-
-class SampleModal extends Modal {
-  constructor(app) {
-    super(app);
+  /**
+   * Returns true if there is an existing better graph view, false otherwise.
+   * @return {boolean} Whether there is an existing better graph view or not.
+   */
+  betterGraphExists() {
+    return !!this.app.workspace.getLeavesOfType(VIEW_TYPE_BETTER_GRAPH).length;
   }
 
-  onOpen() {
-    let {contentEl} = this;
-    contentEl.setText('Woah!');
-  }
-
-  onClose() {
-    let {contentEl} = this;
-    contentEl.empty();
-  }
-}
-
-class SampleSettingTab extends PluginSettingTab {
-  display() {
-    let {containerEl} = this;
-
-    containerEl.empty();
-
-    containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
-
-    new Setting(containerEl)
-        .setName('Setting #1')
-        .setDesc('It\'s a secret')
-        .addText(text => text.setPlaceholder('Enter your secret')
-            .setValue('')
-            .onChange((value) => {
-              console.log('Secret: ' + value);
-            }));
-
-  }
 }
