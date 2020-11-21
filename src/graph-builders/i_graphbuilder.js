@@ -22,17 +22,17 @@ import {Edge} from "../../sigma/src/classes/sigma.classes.edge";
  * sigma.js will accept.
  * @interface
  */
-function GraphBuilder() {}
-
-/**
- * Generates a graph for the given vault.
- * @param {Vault} vault The vault to use to generate the graph.
- * @return {{nodes: !Array<Node>, edges: !Array<Edge>}} A valid graph which
- *     sigma.js will accept.
- */
-GraphBuilder.prototype.generateGraph = function (vault) {
-  return {
-    nodes: [],
-    edges: [],
+export class GraphBuilder {
+  /**
+   * Generates a graph for the given vault.
+   * @param {Vault} vault The vault to use to generate the graph.
+   * @return {{nodes: !Array<Node>, edges: !Array<Edge>}} A valid graph which
+   *     sigma.js will accept.
+   */
+  generateGraph(vault) {
+    return {
+      nodes: [],
+      edges: [],
+    }
   }
-};
+}
