@@ -12,7 +12,7 @@
 'use strict';
 
 
-import {Vault} from "obsidian";
+import {Vault, MetadataCache} from "obsidian";
 import {Node} from "../../sigma/src/classes/sigma.classes.node";
 import {Edge} from "../../sigma/src/classes/sigma.classes.edge";
 
@@ -25,11 +25,13 @@ import {Edge} from "../../sigma/src/classes/sigma.classes.edge";
 export class GraphBuilder {
   /**
    * Generates a graph for the given vault.
-   * @param {Vault} vault The vault to use to generate the graph.
+   * @param {Vault} vault The vault to used to generate the graph.
+   * @param {MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
    * @return {{nodes: !Array<Node>, edges: !Array<Edge>}} A valid graph which
    *     sigma.js will accept.
    */
-  generateGraph(vault) {
+  generateGraph(vault, metadataCache) {
     return {
       nodes: [],
       edges: [],
