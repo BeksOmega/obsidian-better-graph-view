@@ -47,6 +47,10 @@
     this.started = false;
     this.running = false;
 
+    // Drag node
+    this.draggingNode = null;
+    this.draggingNodeIndex = null;
+
     // Web worker or classic DOM events?
     if (this.shouldUseWorker) {
       if (!this.workerUrl) {
@@ -167,10 +171,13 @@
         realIndex;
 
     // Moving nodes
-    for (var i = 0, l = this.nodesByteArray.length; i < l; i += this.ppn) {
+    for (var i = 0, l = this.nodesByteArray.length; i < l; i += this.ppn, j++) {
+      if (this.draggingNode && j == this.draggingNodeIndex) {
+        this.nodesByteArray[i] = this.draggingNode.x;
+        this.nodesByteArray[i+1] = this.draggingNode.y;
+      }
       nodes[j].x = this.nodesByteArray[i];
       nodes[j].y = this.nodesByteArray[i + 1];
-      j++;
     }
   };
 
@@ -277,6 +284,20 @@
       this.worker.postMessage(data);
     else
       _root.postMessage(data, '*');
+  };
+
+  /* My modifications */
+
+  Supervisor.prototype.setDraggingNode = function(node) {
+    if (node) {
+      this.draggingNodeIndex = this.graph.nodes().indexOf(node);
+    } else {
+      const i = this.draggingNodeIndex * this.ppn;
+      this.nodesByteArray[i] = this.draggingNode.x;
+      this.nodesByteArray[i + 1] = this.draggingNode.y;
+    }
+
+    this.draggingNode = node;
   };
 
   /**

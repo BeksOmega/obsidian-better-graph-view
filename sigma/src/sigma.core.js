@@ -331,6 +331,8 @@
         renderer,
         o = options || {};
 
+    console.log(o, o.container);
+
     // Polymorphism:
     if (typeof o === 'string')
       o = {

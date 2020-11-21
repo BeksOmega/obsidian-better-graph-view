@@ -47,8 +47,10 @@ import '../sigma/src/misc/sigma.misc.bindEvents';
 import '../sigma/src/misc/sigma.misc.bindDOMEvents';
 import '../sigma/src/misc/sigma.misc.drawHovers';
 
-import '../sigma/plugins/sigma.layout.forceAtlas2/worker'
-import '../sigma/plugins/sigma.layout.forceAtlas2/supervisor'
+import '../sigma/plugins/sigma.layout.forceAtlas2/worker';
+import '../sigma/plugins/sigma.layout.forceAtlas2/supervisor';
+
+import '../sigma/plugins/sigma.plugins.dragNodes/sigma.plugins.dragNodes';
 
 export default class TestView extends ItemView {
   /**
@@ -71,65 +73,66 @@ export default class TestView extends ItemView {
     div.setAttribute('id', 'graph-container');
     this.contentEl.appendChild(div);
 
-    var i,
-        s,
-        o,
-        N = 100,
-        E = 500,
-        C = 5,
-        d = 0.5,
-        cs = [],
-        g = {
-          nodes: [],
-          edges: []
-        };
+    const N = 100,
+        E = 100;
 
-    // Generate the graph:
-    for (i = 0; i < C; i++)
-      cs.push({
-        id: i,
-        nodes: [],
-        color: '#' + (
-            Math.floor(Math.random() * 16777215).toString(16) + '000000'
-        ).substr(0, 6)
-      });
+    const g = {
+      nodes: [],
+      edges: [],
+    };
 
-    for (i = 0; i < N; i++) {
-      o = cs[(Math.random() * C) | 0];
+    for (let i = 0; i < N; i++) {
       g.nodes.push({
         id: 'n' + i,
         label: 'Node' + i,
         x: 100 * Math.cos(2 * i * Math.PI / N),
         y: 100 * Math.sin(2 * i * Math.PI / N),
+        size: 1,
+        color: '#666'
+
+      })
+    }
+    for (let i = 1; i < N; i++) {
+      g.edges.push({
+        id: 'e' + i,
+        source: 'n' + (i-1),
+        target: 'n' + i,
         size: Math.random(),
-        color: o.color
-      });
-      o.nodes.push('n' + i);
+        colour: '#ccc'
+      })
     }
 
-    for (i = 0; i < E; i++) {
-      if (Math.random() < 1 - d)
-        g.edges.push({
-          id: 'e' + i,
-          source: 'n' + ((Math.random() * N) | 0),
-          target: 'n' + ((Math.random() * N) | 0)
-        });
-      else {
-        o = cs[(Math.random() * C) | 0];
-        g.edges.push({
-          id: 'e' + i,
-          source: o.nodes[(Math.random() * o.nodes.length) | 0],
-          target: o.nodes[(Math.random() * o.nodes.length) | 0]
-        });
-      }
-    }
-
-    s = new sigma({
+    const s = new sigma({
       graph: g,
-      container: div,
-      //renderer: 'canvas',
+      renderer: {
+        container: div,
+        type: 'canvas',
+      }
     });
+    const atlasObj = s.startForceAtlas2(
+      {
+        linLogMode: false,
+        outboundAttractionDistribution: false,
+        adjustSizes: false,
+        edgeWeightInfluence: 0,
+        scalingRatio: 1,
+        strongGravityMode: false,
+        gravity: 1,
+        barnesHutOptimize: true,
+        barnesHutTheta: 0.5,
+        slowDown: 10,
+        startingIterations: 1,
+        iterationsPerRender: 1,
+        worker: false
+      }
+    );
 
-    s.startForceAtlas2({worker: true, barnesHutOptimize: false});
+    const dragListener = sigma.plugins.dragNodes(s, s.renderers[0]);
+    dragListener.bind('startdrag', function(event) {
+      atlasObj.supervisor.setDraggingNode(event.data.node);
+    });
+    dragListener.bind('dragend', function (event) {
+      atlasObj.supervisor.setDraggingNode(null);
+    })
   }
 }

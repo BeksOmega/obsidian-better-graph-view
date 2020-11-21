@@ -17,10 +17,13 @@
    * @param  {object}                 object   The options object.
    * @return {sigma.renderers.canvas}          The renderer instance.
    */
-  sigma.renderers.webgl = function(graph, camera, settings, options) {
+  sigma.renderers['webgl'] = function(graph, camera, settings, options) {
     if (typeof options !== 'object')
       throw 'sigma.renderers.webgl: Wrong arguments.';
 
+    console.log(HTMLElement);
+    console.log(options, options.container);
+    console.trace();
     if (!(options.container instanceof HTMLElement))
       throw 'Container not found.';
 

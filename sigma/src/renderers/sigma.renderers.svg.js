@@ -24,6 +24,7 @@
     if (typeof options !== 'object')
       throw 'sigma.renderers.svg: Wrong arguments.';
 
+    console.log(HTMLElement);
     if (!(options.container instanceof HTMLElement))
       throw 'Container not found.';
 

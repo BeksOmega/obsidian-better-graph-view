@@ -20,10 +20,11 @@
    * @param  {object}                 object   The options object.
    * @return {sigma.renderers.canvas}          The renderer instance.
    */
-  sigma.renderers.canvas = function(graph, camera, settings, options) {
+  sigma.renderers['canvas'] = function(graph, camera, settings, options) {
     if (typeof options !== 'object')
       throw 'sigma.renderers.canvas: Wrong arguments.';
 
+    console.log(HTMLElement);
     if (!(options.container instanceof HTMLElement))
       throw 'Container not found.';
 
