@@ -1,19 +1,18 @@
-import typescript from '@rollup/plugin-typescript';
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 
 export default {
-  input: 'main.ts',
+  input: 'src/app.js',
   output: {
-    dir: '.',
     sourcemap: 'inline',
     format: 'cjs',
-    exports: 'default'
+    exports: 'default',
+    file: 'main.js'
   },
   external: ['obsidian'],
   plugins: [
-    typescript(),
     nodeResolve({browser: true}),
     commonjs(),
-  ]
+  ],
+  context: 'window'
 };
