@@ -288,6 +288,16 @@
 
   /* My modifications */
 
+  /**
+   * Sets the node that is currently being dragged. This node will not have its
+   * position changed during applyLayoutchanges(). Instead the node's position
+   * will be applied to the nodesByteArray before it is passed back to the
+   * worker.
+   *
+   * Pass null at the end of the drag to stop treating the node differently.
+   * @param {!Object|null} node The node to mark as the dragging node, or null
+   *     to reset.
+   */
   Supervisor.prototype.setDraggingNode = function(node) {
     if (node) {
       this.draggingNodeIndex = this.graph.nodes().indexOf(node);
