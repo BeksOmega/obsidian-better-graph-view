@@ -2,3 +2,12 @@
 body {
     color: red;
 }
+
+#graph-container-container {
+    padding: 0;
+}
+
+#graph-container {
+    width: 100%;
+    height: 100%;
+}
