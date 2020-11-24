@@ -90,26 +90,27 @@ export default class BetterGraphView extends ItemView {
    * @return {Promise<void>} A promise to create the view.
    */
   async onOpen() {
+    const {vault, metadataCache} = this.app;
+
     const div = document.createElement('div');
     div.setAttribute('id', 'graph-container');
     this.contentEl.appendChild(div);
 
     const graphBuilder = new SimpleGraphBuilder();
     const s = new sigma({
-      graph: graphBuilder.generateGraph(this.app.vault, this.app.metadataCache),
+      graph: graphBuilder.generateGraph(vault, metadataCache),
       renderer: {
         container: div,
         type: 'canvas',
       }
     });
-    const atlasObj = s.startForceAtlas2(
-        {
-          worker: true,
-          barnesHutOptimize: false,
-          scalingRatio: .025,
-          gravity: 1,
-        }
-    );
+
+    const atlasObj = s.startForceAtlas2({
+      worker: true,
+      barnesHutOptimize: false,
+      scalingRatio: .025,
+      gravity: 1,
+    });
 
     const dragListener = sigma.plugins.dragNodes(s, s.renderers[0]);
     dragListener.bind('startdrag', function(event) {

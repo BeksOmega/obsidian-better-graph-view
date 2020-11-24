@@ -5,7 +5,8 @@
  */
 
 /**
- * @fileoverview Class for the better graph view.
+ * @fileoverview Class for a graph builder that constructs a graph very similar
+ *     to the default obsidian graph.
  * @author bekawestberg@gmail.com (Beka Westberg)
  */
 'use strict';
@@ -32,7 +33,7 @@ export class SimpleGraphBuilder extends GraphBuilder {
       nodes: [],
       edges: [],
     };
-
+    const nodeIds = new Set();
     const files = vault.getMarkdownFiles();
     if (!files) {
       return;
@@ -42,6 +43,7 @@ export class SimpleGraphBuilder extends GraphBuilder {
     // Add existing files as nodes.
     files.forEach((file) => {
       const id = metadataCache.fileToLinktext(file, file.path);
+      nodeIds.add(id);
       g.nodes.push(new Node(
           id,
           file.basename,
@@ -52,18 +54,17 @@ export class SimpleGraphBuilder extends GraphBuilder {
       ));
     });
 
-    // Add links as edges and non-existing files as nodes.
+    // Add links as edges and not-yet-created files as nodes.
     files.forEach((file) => {
       const fileId = metadataCache.fileToLinktext(file, file.path);
-
       const cache = metadataCache.getFileCache(file);
       if (!cache.links) {
         return;
       }
 
       cache.links.forEach((ref) => {
-        const refExists = g.nodes.some((elem) => elem.id == ref.link);
-        if (!refExists) {
+        if (!nodeIds.has(ref.link)) {  // Ref must not exist yet. Create node.
+          nodeIds.add(ref.link);
           g.nodes.push(new Node(
               ref.link,
               ref.link,
@@ -73,7 +74,6 @@ export class SimpleGraphBuilder extends GraphBuilder {
               '#ccc'
           ));
         }
-
         g.edges.push(new Edge(
             fileId + ' to ' + ref.link,
             fileId,
