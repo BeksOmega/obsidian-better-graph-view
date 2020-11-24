@@ -51,7 +51,6 @@ export class SimpleGraphBuilder extends GraphBuilder {
           '#666'
       ));
     });
-    console.log(g.nodes);
 
     // Add links as edges and non-existing files as nodes.
     files.forEach((file) => {
@@ -65,14 +64,21 @@ export class SimpleGraphBuilder extends GraphBuilder {
       cache.links.forEach((ref) => {
         const refExists = g.nodes.some((elem) => elem.id == ref.link);
         if (!refExists) {
-          return;
+          g.nodes.push(new Node(
+              ref.link,
+              ref.link,
+              numFiles * 10 * Math.random(),
+              numFiles * 10 * Math.random(),
+              1,
+              '#ccc'
+          ));
         }
 
         g.edges.push(new Edge(
             fileId + ' to ' + ref.link,
             fileId,
             ref.link,
-            10,
+            1,
             '#ccc',
         ));
       })
