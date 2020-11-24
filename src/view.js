@@ -66,6 +66,13 @@ export default class BetterGraphView extends ItemView {
    */
   constructor(leaf) {
     super(leaf);
+
+    /**
+     * The sigmajs instance currently being used by this view, or null.
+     * @type {sigma|null}
+     * @private
+     */
+    this.sigma_ = null;
   }
 
   /**
@@ -95,9 +102,10 @@ export default class BetterGraphView extends ItemView {
     const div = document.createElement('div');
     div.setAttribute('id', 'graph-container');
     this.contentEl.appendChild(div);
+    this.contentEl.setAttribute('id', 'graph-container-container');
 
     const graphBuilder = new SimpleGraphBuilder();
-    const s = new sigma({
+    this.sigma_ = new sigma({
       graph: graphBuilder.generateGraph(vault, metadataCache),
       renderer: {
         container: div,
@@ -105,19 +113,27 @@ export default class BetterGraphView extends ItemView {
       }
     });
 
-    const atlasObj = s.startForceAtlas2({
+    const atlasObj = this.sigma_.startForceAtlas2({
       worker: true,
       barnesHutOptimize: false,
       scalingRatio: .025,
       gravity: 1,
     });
 
-    const dragListener = sigma.plugins.dragNodes(s, s.renderers[0]);
+    const dragListener = sigma.plugins.dragNodes(
+        this.sigma_, this.sigma_.renderers[0]);
     dragListener.bind('startdrag', function(event) {
       atlasObj.supervisor.setDraggingNode(event.data.node);
     });
     dragListener.bind('dragend', function (event) {
       atlasObj.supervisor.setDraggingNode(null);
     });
+  }
+
+  async onClose() {
+    if (this.sigma_) {
+      this.sigma_.kill();
+    }
+    return Promise.resolve();
   }
 }
