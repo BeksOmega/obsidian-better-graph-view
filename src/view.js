@@ -12,8 +12,9 @@
 
 
 // Obsidian imports
-import { ItemView, WorkspaceLeaf} from 'obsidian';
-import { VIEW_TYPE_BETTER_GRAPH, BETTER_GRAPH_TITLE } from "./constants";
+import {ItemView, WorkspaceLeaf, Vault} from 'obsidian';
+import {VIEW_TYPE_BETTER_GRAPH} from "./constants";
+import {SimpleGraphBuilder} from "./graph-builders/simple";
 
 // Sigma imports
 import '../sigma/src/sigma.core';
@@ -89,63 +90,27 @@ export default class BetterGraphView extends ItemView {
    * @return {Promise<void>} A promise to create the view.
    */
   async onOpen() {
+    const {vault, metadataCache} = this.app;
+
     const div = document.createElement('div');
     div.setAttribute('id', 'graph-container');
     this.contentEl.appendChild(div);
 
-    const N = 100,
-        E = 100;
-
-    const g = {
-      nodes: [],
-      edges: [],
-    };
-
-    for (let i = 0; i < N; i++) {
-      g.nodes.push({
-        id: 'n' + i,
-        label: 'Node' + i,
-        x: 100 * Math.cos(2 * i * Math.PI / N),
-        y: 100 * Math.sin(2 * i * Math.PI / N),
-        size: 1,
-        color: '#666'
-
-      })
-    }
-    for (let i = 1; i < N; i++) {
-      g.edges.push({
-        id: 'e' + i,
-        source: 'n' + (i-1),
-        target: 'n' + i,
-        size: Math.random(),
-        colour: '#ccc'
-      })
-    }
-
+    const graphBuilder = new SimpleGraphBuilder();
     const s = new sigma({
-      graph: g,
+      graph: graphBuilder.generateGraph(vault, metadataCache),
       renderer: {
         container: div,
         type: 'canvas',
       }
     });
-    const atlasObj = s.startForceAtlas2(
-      {
-        linLogMode: false,
-        outboundAttractionDistribution: false,
-        adjustSizes: false,
-        edgeWeightInfluence: 0,
-        scalingRatio: 1,
-        strongGravityMode: false,
-        gravity: 1,
-        barnesHutOptimize: true,
-        barnesHutTheta: 0.5,
-        slowDown: 10,
-        startingIterations: 1,
-        iterationsPerRender: 1,
-        worker: false
-      }
-    );
+
+    const atlasObj = s.startForceAtlas2({
+      worker: true,
+      barnesHutOptimize: false,
+      scalingRatio: .025,
+      gravity: 1,
+    });
 
     const dragListener = sigma.plugins.dragNodes(s, s.renderers[0]);
     dragListener.bind('startdrag', function(event) {
@@ -153,6 +118,6 @@ export default class BetterGraphView extends ItemView {
     });
     dragListener.bind('dragend', function (event) {
       atlasObj.supervisor.setDraggingNode(null);
-    })
+    });
   }
 }
