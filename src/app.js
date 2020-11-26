@@ -12,8 +12,8 @@
 
 
 import {Plugin} from 'obsidian';
-import {BetterGraphView} from './views/bettergraph';
-import {GraphSettingsView} from './views/graphsettings';
+import {BetterGraphView} from './views/better-graph';
+import {GraphSettingsView} from './views/graph-settings';
 import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from './constants';
 
 
@@ -66,6 +66,8 @@ export default class BetterGraphPlugin extends Plugin {
    * graph view already exists.
    */
   async createBetterGraph() {
+    // TODO: Actually, we should tightly couple these.
+
     if (!this.graphSettingsExists()) {
       await this.app.workspace.getRightLeaf(true).setViewState({
         type: VIEW_TYPE_GRAPH_SETTINGS,

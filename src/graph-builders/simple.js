@@ -13,9 +13,10 @@
 
 
 import {Vault, MetadataCache} from "obsidian";
-import {GraphBuilder} from "./i_graphbuilder";
+import {GraphBuilder} from "./i-graphbuilder";
 import {Node} from "../../sigma/src/classes/sigma.classes.node";
 import {Edge} from "../../sigma/src/classes/sigma.classes.edge";
+import {GraphBuilderRegistry} from './graph-builders-registry';
 
 
 export class SimpleGraphBuilder extends GraphBuilder {
@@ -86,4 +87,28 @@ export class SimpleGraphBuilder extends GraphBuilder {
 
     return g;
   }
+
+  /**
+   * Returns the display name of this graph builder.
+   * @return {string} The display name of this graph builder.
+   */
+  getDisplayName() {
+    return 'Simple';
+  }
+
+  /**
+   * Returns the configuration of this graph builder.
+   * @return {[]}
+   */
+  getConfig() {
+    return [
+      {
+        type: 'toggle',
+        id: 'tags',
+        displayText: 'Tags',
+      },
+    ]
+  };
 }
+
+GraphBuilderRegistry.register('simple-graph-builder', SimpleGraphBuilder);
