@@ -12,15 +12,16 @@
 'use strict';
 
 
-import {Vault, MetadataCache} from "obsidian";
-import {GraphBuilder} from "./i-graphbuilder";
-import {Node} from "../../sigma/src/classes/sigma.classes.node";
-import {Edge} from "../../sigma/src/classes/sigma.classes.edge";
+import {Vault, MetadataCache, TFile} from 'obsidian';
+import {GraphBuilder} from './i-graphbuilder';
+import {Node} from '../../sigma/src/classes/sigma.classes.node';
+import {Edge} from '../../sigma/src/classes/sigma.classes.edge';
 import {GraphBuilderRegistry} from './graph-builders-registry';
 
 
-export class SimpleGraphBuilder extends GraphBuilder {
+const EXISTING_FILES_ONLY = 'existingFilesOnly';
 
+export class SimpleGraphBuilder extends GraphBuilder {
   /**
    * Returns the display name of this graph builder.
    * @return {string} The display name of this graph builder.
@@ -37,8 +38,8 @@ export class SimpleGraphBuilder extends GraphBuilder {
     return [
       {
         type: 'toggle',
-        id: 'tags',
-        displayText: 'Tags',
+        id: EXISTING_FILES_ONLY,
+        displayText: 'Existing files only',
         default: false,
       },
     ]
@@ -47,54 +48,83 @@ export class SimpleGraphBuilder extends GraphBuilder {
   /**
    * Generates a simple graph for the given vault. Looks very similar to the
    * default obsidian graph.
+   * @param {Map<string, *>} config The current configuration of the graph.
    * @param {Vault} vault The vault to use to generate the graph.
    * @param {MetadataCache} metadataCache The metadata cache used to generate
    *     the graph.
    */
   generateGraph(config, vault, metadataCache) {
-    const g = this.graph_;
-    const nodeIds = new Set();
     const files = vault.getMarkdownFiles();
     if (!files) {
       return;
     }
-    const numFiles = files.length;
 
-    // Add existing files as nodes.
+    this.addExistingFiles_(files, metadataCache);
+    if (!config.get(EXISTING_FILES_ONLY)) {
+      this.addNonExistingFiles_(files, metadataCache);
+    }
+  }
+
+  /**
+   * Called when the config updates. Adds or removes nodes and edges as
+   * necessary.
+   * @param {Object} oldConfig The old configuration.
+   * @param {Object} newConfig The new configuration.
+   * @param {Vault} vault The vault to used to generate the graph.
+   * @param {MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   */
+  onConfigUpdate(oldConfig, newConfig, vault, metadataCache) {
+    const files = vault.getMarkdownFiles();
+    if (!files) {
+      return;
+    }
+
+    if (oldConfig.get(EXISTING_FILES_ONLY) != newConfig.get(EXISTING_FILES_ONLY)) {
+      if (newConfig.get(EXISTING_FILES_ONLY)) {
+        this.removeNonExistingFiles_(files, metadataCache);
+      } else {
+        this.addNonExistingFiles_(files, metadataCache);
+      }
+    }
+  }
+
+  /**
+   * Adds all of the files in 'files' to the graph, and connects them.
+   * @param {!Array<!TFile>} files All of the files in the vault.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   * @private
+   */
+  addExistingFiles_(files, metadataCache) {
+    const existingFileIds = new Set();
+
+    // Create nodes.
     files.forEach((file) => {
       const id = metadataCache.fileToLinktext(file, file.path);
-      nodeIds.add(id);
-      g.addNode(new Node(
+      existingFileIds.add(id);
+      this.graph_.addNode(new Node(
           id,
           file.basename,
-          numFiles * 10 * Math.random(),
-          numFiles * 10 * Math.random(),
+          200 * Math.random(),
+          200 * Math.random(),
           1,
           '#666'
       ));
     });
 
-    // Add links as edges and not-yet-created files as nodes.
+    // Create edges.
     files.forEach((file) => {
       const fileId = metadataCache.fileToLinktext(file, file.path);
       const cache = metadataCache.getFileCache(file);
       if (!cache.links) {
         return;
       }
-
       cache.links.forEach((ref) => {
-        if (!nodeIds.has(ref.link)) {  // Ref must not exist yet. Create node.
-          nodeIds.add(ref.link);
-          g.addNode(new Node(
-              ref.link,
-              ref.link,
-              numFiles * 10 * Math.random(),
-              numFiles * 10 * Math.random(),
-              1,
-              '#ccc'
-          ));
+        if (!existingFileIds.has(ref.link)) {
+          return;
         }
-        g.addEdge(new Edge(
+        this.graph_.addEdge(new Edge(
             fileId + ' to ' + ref.link,
             fileId,
             ref.link,
@@ -103,16 +133,73 @@ export class SimpleGraphBuilder extends GraphBuilder {
         ));
       })
     });
-
-    return g;
   }
 
   /**
-   * Called when the config updates. Adds or removes nodes as necessary.
-   * @param {Object} oldConfig The old configuration.
-   * @param {Object} newConfig The new configuration.
+   * Adds all of the files that are linked, but not created, to the graph.
+   * @param {!Array<TFile>} files All of the existing files in the vault.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   * @private
    */
-  onConfigUpdate(oldConfig, newConfig, vault, metadataCache) {
+  addNonExistingFiles_(files, metadataCache) {
+    const existingFileIds = new Set();
+    files.forEach((file) => {
+      existingFileIds.add(metadataCache.fileToLinktext(file, file.path));
+    });
+
+    const createdNonExistingIds = new Set();
+    files.forEach((file) => {
+      const fileId = metadataCache.fileToLinktext(file, file.path);
+      const cache = metadataCache.getFileCache(file);
+      if (!cache.links) {
+        return;
+      }
+
+      cache.links.forEach((ref) => {
+        if (existingFileIds.has(ref.link)) {
+          return;
+        }
+        if (!createdNonExistingIds.has(ref.link)) {
+          createdNonExistingIds.add(ref.link);
+          this.graph_.addNode(new Node(
+              ref.link,
+              ref.link,
+              200 * Math.random(),
+              200 * Math.random(),
+              1,
+              '#ccc'
+          ));
+        }
+        this.graph_.addEdge(new Edge(
+            fileId + ' to ' + ref.link,
+            fileId,
+            ref.link,
+            1,
+            '#ccc',
+        ));
+      })
+    });
+  }
+
+  /**
+   * Removes all of the files that are linked, but not created, from the graph.
+   * @param {!Array<TFile>} files All of the existing files in the vault.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   * @private
+   */
+  removeNonExistingFiles_(files, metadataCache) {
+    const existingFileIds = new Set();
+    files.forEach((file) => {
+      existingFileIds.add(metadataCache.fileToLinktext(file, file.path));
+    });
+
+    for (const node of this.graph_.nodes()) {
+      if (!existingFileIds.has(node.id)) {
+        this.graph_.dropNode(node.id);
+      }
+    }
   }
 }
 

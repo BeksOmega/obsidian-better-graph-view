@@ -34,6 +34,7 @@ export class GraphBuilder {
 
   /**
    * Generates a graph for the given vault.
+   * @param {Map<string, *>} config The current configuration of the graph.
    * @param {Vault} vault The vault to used to generate the graph.
    * @param {MetadataCache} metadataCache The metadata cache used to generate
    *     the graph.
@@ -95,6 +96,9 @@ export class GraphBuilder {
    * accordingly.
    * @param {!Object} oldConfig The old configuration.
    * @param {!Object} newConfig The new configuration.
+   * @param {Vault} vault The vault to used to generate the graph.
+   * @param {MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
    */
-  onConfigUpdate(oldConfig, newConfig) {}
+  onConfigUpdate(oldConfig, newConfig, vault, metadataCache) {}
 }

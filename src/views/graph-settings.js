@@ -55,6 +55,13 @@ export class GraphSettingsView extends ItemView {
      * @private
      */
     this.graph_ = null;
+
+    /**
+     * The current configuration of the graph builder.
+     * @type {Object|null}
+     * @private
+     */
+    this.currentBuilderConfig_ = null;
   }
 
   getViewType() {
@@ -92,8 +99,9 @@ export class GraphSettingsView extends ItemView {
   setGraph(graph) {
     this.graph_ = graph;
     this.selectedBuilder_.setGraph(graph);
+    this.currentBuilderConfig_ = this.generateConfig_();
     this.selectedBuilder_.generateGraph(
-        {}, this.app.vault, this.app.metadataCache);
+        this.currentBuilderConfig_, this.app.vault, this.app.metadataCache);
   }
 
   /**
@@ -130,8 +138,8 @@ export class GraphSettingsView extends ItemView {
    */
   createConfigToggle_(setting, option) {
     const toggle = new ToggleComponent(setting.controlEl);
-    this.subscribeToComponentChanges_(option.id, toggle);
     toggle.setValue(!!option.default);
+    this.subscribeToComponentChanges_(option.id, toggle);
   }
 
   /**
@@ -142,7 +150,6 @@ export class GraphSettingsView extends ItemView {
    */
   createConfigSlider_(setting, option) {
     const slider = new SliderComponent(setting.controlEl);
-    this.subscribeToComponentChanges_(option.id, slider);
     slider.setDynamicTooltip();
     slider.setLimits(
         option.min || 0,
@@ -150,6 +157,7 @@ export class GraphSettingsView extends ItemView {
         option.step || 1
     );
     slider.setValue(option.default || 0);
+    this.subscribeToComponentChanges_(option.id, slider);
   }
 
   /**
@@ -164,18 +172,44 @@ export class GraphSettingsView extends ItemView {
     }
 
     const dropdown = new DropdownComponent(setting.controlEl);
-    this.subscribeToComponentChanges_(option.id, dropdown);
     for (const opt of option.optionList) {
       dropdown.addOption(opt.id, opt.displayText);
     }
     dropdown.setValue(option.default || option.optionList[0].id);
+    this.subscribeToComponentChanges_(option.id, dropdown);
   }
 
+  /**
+   * Adds the value component to the map of settings, and adds a change listener
+   * to the value component.
+   * @param {string} id The id of the component.
+   * @param {ValueComponent} valueComponent The component to listen to.
+   * @private
+   */
   subscribeToComponentChanges_(id, valueComponent) {
     this.settings_.set(id, valueComponent);
-    valueComponent.onChange(this.onSettingChange_);
+    valueComponent.onChange(this.updateConfig_.bind(this));
   }
 
-  onSettingChange_() {
+  /**
+   * Generates a new config and passes it to the selected builder.
+   * @private
+   */
+  updateConfig_() {
+    const newConfig = this.generateConfig_();
+    this.selectedBuilder_.onConfigUpdate(
+        this.currentBuilderConfig_,
+        newConfig,
+        this.app.vault,
+        this.app.metadataCache);
+    this.currentBuilderConfig_ = newConfig;
+  }
+
+  generateConfig_() {
+    const config = new Map();
+    for (const [id, valueComponent] of this.settings_) {
+      config.set(id, valueComponent.getValue());
+    }
+    return config;
   }
 }
