@@ -12,14 +12,17 @@
 'use strict';
 
 
-import {Vault, MetadataCache, TFile} from 'obsidian';
+import {Vault, MetadataCache, TFile, getAllTags} from 'obsidian';
 import {GraphBuilder} from './i-graphbuilder';
 import {Node} from '../../sigma/src/classes/sigma.classes.node';
 import {Edge} from '../../sigma/src/classes/sigma.classes.edge';
 import {GraphBuilderRegistry} from './graph-builders-registry';
 
 
+const TAGS = 'tags';
+const ATTACHMENTS = 'attachments';
 const EXISTING_FILES_ONLY = 'existingFilesOnly';
+const ORPHANS = 'orphans';
 
 export class SimpleGraphBuilder extends GraphBuilder {
   /**
@@ -38,9 +41,27 @@ export class SimpleGraphBuilder extends GraphBuilder {
     return [
       {
         type: 'toggle',
+        id: TAGS,
+        displayText: 'Tags',
+        default: false,
+      },
+      {
+        type: 'toggle',
+        id: ATTACHMENTS,
+        displayText: 'Attachments',
+        default: false,
+      },
+      {
+        type: 'toggle',
         id: EXISTING_FILES_ONLY,
         displayText: 'Existing files only',
         default: false,
+      },
+      {
+        type: 'toggle',
+        id: ORPHANS,
+        displayText: 'Orphans',
+        default: true,
       },
     ]
   };
@@ -60,6 +81,9 @@ export class SimpleGraphBuilder extends GraphBuilder {
     }
 
     this.addExistingFiles_(files, metadataCache);
+    if (config.get(TAGS)) {
+      this.addTags_(files, metadataCache);
+    }
     if (!config.get(EXISTING_FILES_ONLY)) {
       this.addNonExistingFiles_(files, metadataCache);
     }
@@ -80,6 +104,13 @@ export class SimpleGraphBuilder extends GraphBuilder {
       return;
     }
 
+    if (oldConfig.get(TAGS) != newConfig.get(TAGS)) {
+      if (newConfig.get(TAGS)) {
+        this.addTags_(files, metadataCache);
+      } else {
+        this.removeTags_(files, metadataCache);
+      }
+    }
     if (oldConfig.get(EXISTING_FILES_ONLY) != newConfig.get(EXISTING_FILES_ONLY)) {
       if (newConfig.get(EXISTING_FILES_ONLY)) {
         this.removeNonExistingFiles_(files, metadataCache);
@@ -197,6 +228,60 @@ export class SimpleGraphBuilder extends GraphBuilder {
 
     for (const node of this.graph_.nodes()) {
       if (!existingFileIds.has(node.id)) {
+        this.graph_.dropNode(node.id);
+      }
+    }
+  }
+
+  /**
+   * Adds tags to the graph. Tags are only connected to existing file nodes.
+   * @param {!Array<TFile>} files All of the existing files in the vault.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   * @private
+   */
+  addTags_(files, metadataCache) {
+    const createdTagIds = new Set();
+    files.forEach((file) => {
+      const fileId = metadataCache.fileToLinktext(file, file.path);
+      const cache = metadataCache.getFileCache(file);
+      const tags = getAllTags(cache);
+      tags.forEach((tag) => {
+        const tagId = 'tag' + tag;
+        if (!createdTagIds.has(tagId)) {
+          createdTagIds.add(tagId);
+          const node = new Node(
+              tagId,
+              tag,
+              200 * Math.random(),
+              200 * Math.random(),
+              1,
+              '#800080'
+          );
+          node.isTag = true;
+          this.graph_.addNode(node);
+        }
+        this.graph_.addEdge(new Edge(
+            fileId + ' to ' + tagId,
+            fileId,
+            tagId,
+            1,
+            '#ccc'
+        ));
+      })
+    })
+  }
+
+  /**
+   * Removes tags from the graph.
+   * @param {!Array<TFile>} files All of the existing files in the vault.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   * @private
+   */
+  removeTags_(files, metadataCache) {
+    for (const node of this.graph_.nodes()) {
+      if (node.isTag) {
         this.graph_.dropNode(node.id);
       }
     }
