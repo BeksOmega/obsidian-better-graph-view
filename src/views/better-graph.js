@@ -119,9 +119,11 @@ export class BetterGraphView extends ItemView {
     this.contentEl.appendChild(this.graphContainer_);
     this.contentEl.setAttribute('id', 'graph-container-container');
 
+    this.initGraph_();
+
     this.settingsView_ = workspace.getLeavesOfType(VIEW_TYPE_GRAPH_SETTINGS)[0];
     if (this.settingsView_) {
-      this.initGraph_();
+      this.settingsView_.view.setGraph(this.sigma_.graph);
     }
   }
 
@@ -137,15 +139,11 @@ export class BetterGraphView extends ItemView {
   }
 
   /**
-   * Sets the settingsView and triggers initializing the graph. Necessary if
-   * both views exist on load, but the settings view is created second.
-   * Should only be called by the GraphSettingsView.
-   * @param {GraphSettingsView} settingsView The settings view.
-   * @private
+   * Return the graph for the better graph view.
+   * @return {Object} The graph for the better graph view.
    */
-  setSettingsView_(settingsView) {
-    this.settingsView_ = settingsView;
-    this.initGraph_();
+  getGraph() {
+    return this.sigma_.graph;
   }
 
   /**
@@ -153,11 +151,7 @@ export class BetterGraphView extends ItemView {
    * @private
    */
   initGraph_() {
-    const {vault, metadataCache} = this.app;
-
-    const graphBuilder = new SimpleGraphBuilder();
     this.sigma_ = new sigma({
-      graph: graphBuilder.generateGraph(vault, metadataCache),
       renderer: {
         container: this.graphContainer_,
         type: 'canvas',

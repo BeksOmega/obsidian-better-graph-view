@@ -20,20 +20,39 @@ import {GraphBuilderRegistry} from './graph-builders-registry';
 
 
 export class SimpleGraphBuilder extends GraphBuilder {
+
+  /**
+   * Returns the display name of this graph builder.
+   * @return {string} The display name of this graph builder.
+   */
+  getDisplayName() {
+    return 'Simple';
+  }
+
+  /**
+   * Returns the configuration of this graph builder.
+   * @return {[]}
+   */
+  getConfig() {
+    return [
+      {
+        type: 'toggle',
+        id: 'tags',
+        displayText: 'Tags',
+        default: false,
+      },
+    ]
+  };
+
   /**
    * Generates a simple graph for the given vault. Looks very similar to the
    * default obsidian graph.
    * @param {Vault} vault The vault to use to generate the graph.
    * @param {MetadataCache} metadataCache The metadata cache used to generate
    *     the graph.
-   * @return {{nodes: !Array<Node>, edges: !Array<Edge>}} A simple graph very
-   *     similar to the default obsidian graph.
    */
-  generateGraph(vault, metadataCache) {
-    const g = {
-      nodes: [],
-      edges: [],
-    };
+  generateGraph(config, vault, metadataCache) {
+    const g = this.graph_;
     const nodeIds = new Set();
     const files = vault.getMarkdownFiles();
     if (!files) {
@@ -45,7 +64,7 @@ export class SimpleGraphBuilder extends GraphBuilder {
     files.forEach((file) => {
       const id = metadataCache.fileToLinktext(file, file.path);
       nodeIds.add(id);
-      g.nodes.push(new Node(
+      g.addNode(new Node(
           id,
           file.basename,
           numFiles * 10 * Math.random(),
@@ -66,7 +85,7 @@ export class SimpleGraphBuilder extends GraphBuilder {
       cache.links.forEach((ref) => {
         if (!nodeIds.has(ref.link)) {  // Ref must not exist yet. Create node.
           nodeIds.add(ref.link);
-          g.nodes.push(new Node(
+          g.addNode(new Node(
               ref.link,
               ref.link,
               numFiles * 10 * Math.random(),
@@ -75,7 +94,7 @@ export class SimpleGraphBuilder extends GraphBuilder {
               '#ccc'
           ));
         }
-        g.edges.push(new Edge(
+        g.addEdge(new Edge(
             fileId + ' to ' + ref.link,
             fileId,
             ref.link,
@@ -89,26 +108,12 @@ export class SimpleGraphBuilder extends GraphBuilder {
   }
 
   /**
-   * Returns the display name of this graph builder.
-   * @return {string} The display name of this graph builder.
+   * Called when the config updates. Adds or removes nodes as necessary.
+   * @param {Object} oldConfig The old configuration.
+   * @param {Object} newConfig The new configuration.
    */
-  getDisplayName() {
-    return 'Simple';
+  onConfigUpdate(oldConfig, newConfig, vault, metadataCache) {
   }
-
-  /**
-   * Returns the configuration of this graph builder.
-   * @return {[]}
-   */
-  getConfig() {
-    return [
-      {
-        type: 'toggle',
-        id: 'tags',
-        displayText: 'Tags',
-      },
-    ]
-  };
 }
 
 GraphBuilderRegistry.register('simple-graph-builder', SimpleGraphBuilder);

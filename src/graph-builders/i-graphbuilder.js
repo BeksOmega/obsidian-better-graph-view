@@ -23,20 +23,22 @@ import {Edge} from "../../sigma/src/classes/sigma.classes.edge";
  * @interface
  */
 export class GraphBuilder {
+
+  /**
+   * Sets the graph we will build.
+   * @param {Object} graph The graph we will build.
+   */
+  setGraph(graph) {
+    this.graph_ = graph;
+  }
+
   /**
    * Generates a graph for the given vault.
    * @param {Vault} vault The vault to used to generate the graph.
    * @param {MetadataCache} metadataCache The metadata cache used to generate
    *     the graph.
-   * @return {{nodes: !Array<Node>, edges: !Array<Edge>}} A valid graph which
-   *     sigma.js will accept.
    */
-  generateGraph(vault, metadataCache) {
-    return {
-      nodes: [],
-      edges: [],
-    }
-  }
+  generateGraph(config, vault, metadataCache) {}
 
   /**
    * Returns the display name of this graph builder.
@@ -82,9 +84,17 @@ export class GraphBuilder {
    *   ],
    *   default: string? (defaults to id of first option.)
    * }
-   * @returns {[]}
+   * @returns {!Array}
    */
   getConfig() {
     return [];
   }
+
+  /**
+   * Called when the configuration updates. Graph should be modified
+   * accordingly.
+   * @param {!Object} oldConfig The old configuration.
+   * @param {!Object} newConfig The new configuration.
+   */
+  onConfigUpdate(oldConfig, newConfig) {}
 }
