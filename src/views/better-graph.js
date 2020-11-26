@@ -74,20 +74,6 @@ export class BetterGraphView extends ItemView {
      * @private
      */
     this.graphContainer_ = null;
-
-    /**
-     * The sigmajs instance currently being used by this view, or null.
-     * @type {sigma|null}
-     * @private
-     */
-    this.sigma_ = null;
-
-    /**
-     * The graph settings view associated withthis graph, or null.
-     * @type {GraphSettingsView|null}
-     * @private
-     */
-    this.settingsView_ = null;
   }
 
   /**
@@ -119,60 +105,17 @@ export class BetterGraphView extends ItemView {
     this.contentEl.appendChild(this.graphContainer_);
     this.contentEl.setAttribute('id', 'graph-container-container');
 
-    this.initGraph_();
-
     this.settingsView_ = workspace.getLeavesOfType(VIEW_TYPE_GRAPH_SETTINGS)[0];
     if (this.settingsView_) {
-      this.settingsView_.view.setGraph(this.sigma_.graph);
+      this.settingsView_.view.setGraphView(this);
     }
   }
 
   /**
-   * Cleans up any references to facilitate garbage collection.
-   * @returns {Promise<void>}
+   * Return the graph container for the better graph view.
+   * @return {HTMLElement} The graph container.
    */
-  async onClose() {
-    if (this.sigma_) {
-      this.sigma_.kill();
-    }
-    return Promise.resolve();
-  }
-
-  /**
-   * Return the graph for the better graph view.
-   * @return {Object} The graph for the better graph view.
-   */
-  getGraph() {
-    return this.sigma_.graph;
-  }
-
-  /**
-   * Initializes the the graph builder, sigma, renderer, etc.
-   * @private
-   */
-  initGraph_() {
-    this.sigma_ = new sigma({
-      renderer: {
-        container: this.graphContainer_,
-        type: 'canvas',
-      }
-    });
-
-    const atlasObj = this.sigma_.startForceAtlas2({
-      worker: true,
-      barnesHutOptimize: false,
-      startingIterations: 500,
-      scalingRatio: .025,
-      slowDown: 10,
-    });
-
-    const dragListener = sigma.plugins.dragNodes(
-        this.sigma_, this.sigma_.renderers[0]);
-    dragListener.bind('startdrag', function(event) {
-      atlasObj.supervisor.setDraggingNode(event.data.node);
-    });
-    dragListener.bind('dragend', function (event) {
-      atlasObj.supervisor.setDraggingNode(null);
-    });
+  getGraphContainer() {
+    return this.graphContainer_;
   }
 }

@@ -50,18 +50,18 @@ export class GraphSettingsView extends ItemView {
     this.settings_ = new Map();
 
     /**
-     * The graph for the better graph view.
-     * @type {Object|null}
-     * @private
-     */
-    this.graph_ = null;
-
-    /**
      * The current configuration of the graph builder.
-     * @type {Object|null}
+     * @type {Map|null}
      * @private
      */
     this.currentBuilderConfig_ = null;
+
+    /**
+     * The sigma instance running the better graph view.
+     * @type {Object|null}
+     * @private
+     */
+    this.sigma_ = null;
   }
 
   getViewType() {
@@ -88,20 +88,54 @@ export class GraphSettingsView extends ItemView {
     const betterGraph = this.app.workspace
         .getLeavesOfType(VIEW_TYPE_BETTER_GRAPH)[0];
     if (betterGraph) {
-      this.setGraph(betterGraph.view.getGraph());
+      this.setGraphView(betterGraph.view);
     }
   }
 
   /**
-   * Sets the graph associated with this graph settings view.
-   * @param {Object} graph The graph.
+   * Cleans up any references to facilitate garbage collection.
+   * @return {Promise<void>}
    */
-  setGraph(graph) {
-    this.graph_ = graph;
-    this.selectedBuilder_.setGraph(graph);
+  async onClose() {
+    if (this.sigma_) {
+      this.sigma_.kill();
+    }
+    return Promise.resolve();
+  }
+
+  /**
+   * Sets the graph associated with this graph settings view.
+   * @param {BetterGraphView} graphView The better graph view.
+   */
+  setGraphView(graphView) {
+    this.sigma_ = new sigma({
+      renderer: {
+        container: graphView.getGraphContainer(),
+        type: 'canvas',
+      }
+    });
+
+    this.selectedBuilder_.setGraph(this.sigma_.graph);
     this.currentBuilderConfig_ = this.generateConfig_();
     this.selectedBuilder_.generateGraph(
         this.currentBuilderConfig_, this.app.vault, this.app.metadataCache);
+
+    this.forceAtlas_ = this.sigma_.startForceAtlas2({
+      worker: true,
+      barnesHutOptimize: false,
+      startingIterations: 500,
+      scalingRatio: .025,
+      slowDown: 10,
+    });
+
+    const dragListener = sigma.plugins.dragNodes(
+        this.sigma_, this.sigma_.renderers[0]);
+    dragListener.bind('startdrag', function(event) {
+      this.forceAtlas_.supervisor.setDraggingNode(event.data.node);
+    }.bind(this));
+    dragListener.bind('dragend', function (event) {
+      this.forceAtlas_.supervisor.setDraggingNode(null);
+    }.bind(this));
   }
 
   /**
@@ -196,6 +230,8 @@ export class GraphSettingsView extends ItemView {
    * @private
    */
   updateConfig_() {
+    this.sigma_.killForceAtlas2();
+
     const newConfig = this.generateConfig_();
     this.selectedBuilder_.onConfigUpdate(
         this.currentBuilderConfig_,
@@ -203,8 +239,22 @@ export class GraphSettingsView extends ItemView {
         this.app.vault,
         this.app.metadataCache);
     this.currentBuilderConfig_ = newConfig;
+
+    //this.forceAtlas_.supervisor.graphToByteArrays();
+    this.sigma_.startForceAtlas2({
+      worker: true,
+      barnesHutOptimize: false,
+      startingIterations: 500,
+      scalingRatio: .025,
+      slowDown: 10,
+    });
   }
 
+  /**
+   * Generates the current configuration for the graph.
+   * @return {Map<string, *>} The current configuration for the graph.
+   * @private
+   */
   generateConfig_() {
     const config = new Map();
     for (const [id, valueComponent] of this.settings_) {
