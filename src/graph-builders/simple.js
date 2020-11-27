@@ -84,6 +84,9 @@ export class SimpleGraphBuilder extends GraphBuilder {
     if (config.get(TAGS)) {
       this.addTags_(files, metadataCache);
     }
+    if (config.get(ATTACHMENTS)) {
+      this.addAttachments_(files, metadataCache);
+    }
     if (!config.get(EXISTING_FILES_ONLY)) {
       this.addNonExistingFiles_(files, metadataCache);
     }
@@ -109,6 +112,13 @@ export class SimpleGraphBuilder extends GraphBuilder {
         this.addTags_(files, metadataCache);
       } else {
         this.removeTags_(files, metadataCache);
+      }
+    }
+    if (oldConfig.get(ATTACHMENTS) != newConfig.get(ATTACHMENTS)) {
+      if (newConfig.get(ATTACHMENTS)) {
+        this.addAttachments_(files, metadataCache);
+      } else {
+        this.removeAttachments_(files, metadataCache);
       }
     }
     if (oldConfig.get(EXISTING_FILES_ONLY) != newConfig.get(EXISTING_FILES_ONLY)) {
@@ -193,14 +203,16 @@ export class SimpleGraphBuilder extends GraphBuilder {
         }
         if (!createdNonExistingIds.has(ref.link)) {
           createdNonExistingIds.add(ref.link);
-          this.graph_.addNode(new Node(
+          const node = new Node(
               ref.link,
               ref.link,
               200 * Math.random(),
               200 * Math.random(),
               1,
               '#ccc'
-          ));
+          );
+          node.isNonExisting = true;
+          this.graph_.addNode(node);
         }
         this.graph_.addEdge(new Edge(
             fileId + ' to ' + ref.link,
@@ -221,13 +233,8 @@ export class SimpleGraphBuilder extends GraphBuilder {
    * @private
    */
   removeNonExistingFiles_(files, metadataCache) {
-    const existingFileIds = new Set();
-    files.forEach((file) => {
-      existingFileIds.add(metadataCache.fileToLinktext(file, file.path));
-    });
-
     for (const node of this.graph_.nodes()) {
-      if (!existingFileIds.has(node.id)) {
+      if (node.isNonExisting) {
         this.graph_.dropNode(node.id);
       }
     }
@@ -282,6 +289,64 @@ export class SimpleGraphBuilder extends GraphBuilder {
   removeTags_(files, metadataCache) {
     for (const node of this.graph_.nodes()) {
       if (node.isTag) {
+        this.graph_.dropNode(node.id);
+      }
+    }
+  }
+
+  /**
+   * Adds attachments to the graph. Attachments are only connected to existing
+   * file nodes.
+   * @param {!Array<TFile>} files All of the existing files in the vault.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   * @private
+   */
+  addAttachments_(files, metadataCache) {
+    const createdAttachmentIds = new Set();
+    files.forEach((file) => {
+      const fileId = metadataCache.fileToLinktext(file, file.path);
+      const cache = metadataCache.getFileCache(file);
+      if (!cache.embeds) {
+        return;
+      }
+
+      cache.embeds.forEach((attachment) => {
+        const attachmentId = 'attachment' + attachment.link;
+        if (!createdAttachmentIds.has(attachmentId)) {
+          createdAttachmentIds.add(attachmentId);
+          const node = new Node(
+              attachmentId,
+              attachment.link,
+              200 * Math.random(),
+              200 * Math.random(),
+              1,
+              '#E6E6FA'
+          );
+          node.isAttachment = true;
+          this.graph_.addNode(node);
+        }
+        this.graph_.addEdge(new Edge(
+           fileId + ' to ' + attachmentId,
+           fileId,
+           attachmentId,
+           1,
+           '#ccc'
+        ));
+      });
+    })
+  }
+
+  /**
+   * Removes attachments from the graph.
+   * @param {!Array<TFile>} files All of the existing files in the vault.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   * @private
+   */
+  removeAttachments_(files, metadataCache) {
+    for (const node of this.graph_.nodes()) {
+      if (node.isAttachment) {
         this.graph_.dropNode(node.id);
       }
     }
