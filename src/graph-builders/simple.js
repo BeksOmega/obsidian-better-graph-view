@@ -24,6 +24,8 @@ const ATTACHMENTS = 'attachments';
 const EXISTING_FILES_ONLY = 'existingFilesOnly';
 const ORPHANS = 'orphans';
 
+const MULT = 5;
+
 export class SimpleGraphBuilder extends GraphBuilder {
   /**
    * Returns the display name of this graph builder.
@@ -90,6 +92,9 @@ export class SimpleGraphBuilder extends GraphBuilder {
     if (!config.get(EXISTING_FILES_ONLY)) {
       this.addNonExistingFiles_(files, metadataCache);
     }
+    if (!config.get(ORPHANS)) {
+      this.removeOrphans_(files, metadataCache);
+    }
   }
 
   /**
@@ -128,6 +133,13 @@ export class SimpleGraphBuilder extends GraphBuilder {
         this.addNonExistingFiles_(files, metadataCache);
       }
     }
+    if (oldConfig.get(ORPHANS) != newConfig.get(ORPHANS)) {
+      if (newConfig.get(ORPHANS)) {
+        this.addOrphans_(files, metadataCache);
+      } else {
+        this.removeOrphans_(files, metadataCache);
+      }
+    }
   }
 
   /**
@@ -147,8 +159,8 @@ export class SimpleGraphBuilder extends GraphBuilder {
       this.graph_.addNode(new Node(
           id,
           file.basename,
-          200 * Math.random(),
-          200 * Math.random(),
+          MULT * Math.random(),
+          MULT * Math.random(),
           1,
           '#666'
       ));
@@ -206,8 +218,8 @@ export class SimpleGraphBuilder extends GraphBuilder {
           const node = new Node(
               ref.link,
               ref.link,
-              200 * Math.random(),
-              200 * Math.random(),
+              MULT * Math.random(),
+              MULT * Math.random(),
               1,
               '#ccc'
           );
@@ -260,8 +272,8 @@ export class SimpleGraphBuilder extends GraphBuilder {
           const node = new Node(
               tagId,
               tag,
-              200 * Math.random(),
-              200 * Math.random(),
+              MULT * Math.random(),
+              MULT * Math.random(),
               1,
               '#800080'
           );
@@ -318,8 +330,8 @@ export class SimpleGraphBuilder extends GraphBuilder {
           const node = new Node(
               attachmentId,
               attachment.link,
-              200 * Math.random(),
-              200 * Math.random(),
+              MULT * Math.random(),
+              MULT * Math.random(),
               1,
               '#E6E6FA'
           );
@@ -350,6 +362,56 @@ export class SimpleGraphBuilder extends GraphBuilder {
         this.graph_.dropNode(node.id);
       }
     }
+  }
+
+  /**
+   * Adds notes that have no connections to the graph.
+   * @param {!Array<TFile>} files All of the existing files in the vault.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   * @private
+   */
+  addOrphans_(files, metadataCache) {
+    const existingNodeIds = new Set();
+    this.graph_.nodes().forEach((node) => {
+      existingNodeIds.add(node.id);
+    });
+
+    files.forEach((file) => {
+      const id = metadataCache.fileToLinktext(file, file.path);
+      if (!existingNodeIds.has(id)) {
+        this.graph_.addNode(new Node(
+            id,
+            file.basename,
+            MULT * Math.random(),
+            MULT * Math.random(),
+            1,
+            '#666'
+        ));
+      }
+    });
+  }
+
+  /**
+   * Removes notes that have no connections from the graph.
+   * @param {!Array<TFile>} files All of the existing files in the vault.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   * @private
+   */
+  removeOrphans_(files, metadataCache) {
+    const referencedNodeIds = new Set();
+
+    this.graph_.edges().forEach((edge) => {
+      referencedNodeIds.add(edge.source);
+      referencedNodeIds.add(edge.target);
+    });
+
+    this.graph_.nodes().forEach((node) => {
+      if (!referencedNodeIds.has(node.id)) {
+        this.graph_.dropNode(node.id);
+      }
+    })
   }
 }
 
