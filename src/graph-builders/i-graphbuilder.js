@@ -6,20 +6,18 @@
 
 /**
  * @fileoverview Interface for a graph builder, which is an object that builds
- *     a graph that sigma.js will accept.
+ *     a model of a graph.
  * @author bekawestberg@gmail.com (Beka Westberg)
  */
 'use strict';
 
 
-import {Vault, MetadataCache} from "obsidian";
-import {Node} from "../../sigma/src/classes/sigma.classes.node";
-import {Edge} from "../../sigma/src/classes/sigma.classes.edge";
+import {Vault, MetadataCache} from 'obsidian';
 
 
 /**
- * Interface for a graph builder, which is an object that builds a graph that
- * sigma.js will accept.
+ * Interface for a graph builder, which is an object that builds a model of a
+ * graph.
  * @interface
  */
 export class GraphBuilder {
@@ -34,12 +32,25 @@ export class GraphBuilder {
 
   /**
    * Generates a graph for the given vault.
-   * @param {Map<string, *>} config The current configuration of the graph.
-   * @param {Vault} vault The vault to used to generate the graph.
-   * @param {MetadataCache} metadataCache The metadata cache used to generate
+   * @param {!Map<string, *>} config The current configuration of the graph
+   *     builder.
+   * @param {!Vault} vault The vault to used to generate the graph.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
    *     the graph.
    */
   generateGraph(config, vault, metadataCache) {}
+
+
+  /**
+   * Called when the configuration updates. Graph should be modified
+   * accordingly.
+   * @param {!Map<string, *>} oldConfig The old configuration.
+   * @param {!Map<string, *>} newConfig The new configuration.
+   * @param {!Vault} vault The vault to used to generate the graph.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   */
+  onConfigUpdate(oldConfig, newConfig, vault, metadataCache) {}
 
   /**
    * Returns the display name of this graph builder.
@@ -90,15 +101,4 @@ export class GraphBuilder {
   getConfig() {
     return [];
   }
-
-  /**
-   * Called when the configuration updates. Graph should be modified
-   * accordingly.
-   * @param {!Object} oldConfig The old configuration.
-   * @param {!Object} newConfig The new configuration.
-   * @param {Vault} vault The vault to used to generate the graph.
-   * @param {MetadataCache} metadataCache The metadata cache used to generate
-   *     the graph.
-   */
-  onConfigUpdate(oldConfig, newConfig, vault, metadataCache) {}
 }

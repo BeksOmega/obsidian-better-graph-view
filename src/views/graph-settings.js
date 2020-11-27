@@ -24,6 +24,10 @@ import {GraphBuilder} from '../graph-builders/i-graphbuilder';
 
 
 export class GraphSettingsView extends ItemView {
+  /**
+   * Constructs the new leaf (but not any DOM). Registers any necessary events.
+   * @param {WorkspaceLeaf} leaf
+   */
   constructor(leaf) {
     super(leaf);
 
@@ -62,16 +66,35 @@ export class GraphSettingsView extends ItemView {
      * @private
      */
     this.sigma_ = null;
+
+    /**
+     * The force atlas instance currently running.
+     * @type {Object|null}
+     * @private
+     */
+    this.forceAtlas_ = null;
   }
 
+  /**
+   * Returns the type of the view for use in accessing views of a given type.
+   * @return {string} The type of this view.
+   */
   getViewType() {
     return VIEW_TYPE_GRAPH_SETTINGS;
   }
 
+  /**
+   * Returns the text to be displayed  on the view.
+   * @return {string} The text to be displayed at the top of the view.
+   */
   getDisplayText() {
     return 'Graph settings';
   }
 
+  /**
+   * Initializes the graph settings view.
+   * @return {Promise<void>} A promise to create the view.
+   */
   onOpen() {
     const setting = new Setting(this.contentEl);
     setting.nameEl.appendChild(document.createTextNode('Graph builder'));
@@ -130,12 +153,12 @@ export class GraphSettingsView extends ItemView {
 
     const dragListener = sigma.plugins.dragNodes(
         this.sigma_, this.sigma_.renderers[0]);
-    dragListener.bind('startdrag', function(event) {
+    dragListener.bind('startdrag', (event) => {
       this.forceAtlas_.supervisor.setDraggingNode(event.data.node);
-    }.bind(this));
-    dragListener.bind('dragend', function (event) {
+    });
+    dragListener.bind('dragend', (event) => {
       this.forceAtlas_.supervisor.setDraggingNode(null);
-    }.bind(this));
+    });
   }
 
   /**
@@ -240,8 +263,7 @@ export class GraphSettingsView extends ItemView {
         this.app.metadataCache);
     this.currentBuilderConfig_ = newConfig;
 
-    //this.forceAtlas_.supervisor.graphToByteArrays();
-    this.sigma_.startForceAtlas2({
+    this.forceAtlas_ = this.sigma_.startForceAtlas2({
       worker: true,
       barnesHutOptimize: false,
       startingIterations: 500,

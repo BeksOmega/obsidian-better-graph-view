@@ -62,7 +62,7 @@ import '../../sigma/plugins/sigma.plugins.dragNodes/sigma.plugins.dragNodes';
 export class BetterGraphView extends ItemView {
 
   /**
-   * Constructs the new leaf (but not any DOM). Registers any necessary event.s
+   * Constructs the new leaf (but not any DOM). Registers any necessary events.
    * @param {WorkspaceLeaf} leaf
    */
   constructor(leaf) {
@@ -85,8 +85,7 @@ export class BetterGraphView extends ItemView {
   }
 
   /**
-   * Returns the text to be displayed at the top of the view (depending on your
-   * theme anyway).
+   * Returns the text to be displayed  on the view.
    * @return {string} The text to be displayed at the top of the view.
    */
   getDisplayText() {

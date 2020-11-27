@@ -5,7 +5,8 @@
  */
 
 /**
- * @fileoverview Class for a graph builders registry.
+ * @fileoverview Registry of graph builders. Allows us to easily add new graph
+ *     builders in teh future.
  * @author bekawestberg@gmail.com (Beka Westberg)
  */
 'use strict';
