@@ -11,9 +11,10 @@
 'use strict';
 
 
-import { Plugin} from 'obsidian';
-import BetterGraphView from "./view";
-import { VIEW_TYPE_BETTER_GRAPH } from "./constants";
+import {Plugin} from 'obsidian';
+import {BetterGraphView} from './views/better-graph';
+import {GraphSettingsView} from './views/graph-settings';
+import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from './constants';
 
 
 export default class BetterGraphPlugin extends Plugin {
@@ -26,6 +27,9 @@ export default class BetterGraphPlugin extends Plugin {
     this.registerView(
         VIEW_TYPE_BETTER_GRAPH,
         (leaf) => new BetterGraphView(leaf));
+    this.registerView(
+        VIEW_TYPE_GRAPH_SETTINGS,
+        (leaf) => new GraphSettingsView(leaf));
 
     this.addCommand({
       id: 'open-better-graph',
@@ -40,7 +44,7 @@ export default class BetterGraphPlugin extends Plugin {
        */
       checkCallback: (checking) => {
         if (checking) {
-          return !this.betterGraphExists();
+          return !this.betterGraphExists() || !this.graphSettingsExists();
         }
         this.createBetterGraph();
       },
@@ -61,14 +65,20 @@ export default class BetterGraphPlugin extends Plugin {
    * Creates the better graph view in place of the focused leaf, if no better
    * graph view already exists.
    */
-  createBetterGraph() {
-    // TODO: Might want to allow multiple instances in the future.
-    if (this.betterGraphExists()) {
-      return;
+  async createBetterGraph() {
+    // TODO: Actually, we should tightly couple these.
+
+    if (!this.graphSettingsExists()) {
+      await this.app.workspace.getRightLeaf(true).setViewState({
+        type: VIEW_TYPE_GRAPH_SETTINGS,
+      });
     }
-    this.app.workspace.getMostRecentLeaf().setViewState({
-      type: VIEW_TYPE_BETTER_GRAPH,
-    });
+    // TODO: Might want to allow multiple instances in the future.
+    if (!this.betterGraphExists()) {
+      this.app.workspace.getMostRecentLeaf().setViewState({
+        type: VIEW_TYPE_BETTER_GRAPH,
+      });
+    }
   }
 
   /**
@@ -77,6 +87,15 @@ export default class BetterGraphPlugin extends Plugin {
    */
   betterGraphExists() {
     return !!this.app.workspace.getLeavesOfType(VIEW_TYPE_BETTER_GRAPH).length;
+  }
+
+  /**
+   * Returns true if there is an existing graph settings view, false otherwise.
+   * @return {boolean} Whether there is an existing graph settings view or not.
+   */
+  graphSettingsExists() {
+    return !!this.app.workspace
+        .getLeavesOfType(VIEW_TYPE_GRAPH_SETTINGS).length;
   }
 
 }

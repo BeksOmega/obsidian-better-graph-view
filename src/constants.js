@@ -11,3 +11,4 @@
 'use strict';
 
 export const VIEW_TYPE_BETTER_GRAPH = "beks_better_graph";
+export const VIEW_TYPE_GRAPH_SETTINGS = "beks_graph_settings";
