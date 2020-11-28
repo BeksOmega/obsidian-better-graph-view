@@ -21,6 +21,8 @@ import {
 import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from "../constants";
 import {GraphBuilderRegistry} from '../graph-builders/graph-builders-registry';
 import {GraphBuilder} from '../graph-builders/i-graphbuilder';
+import {SimpleGraphBuilder} from '../graph-builders/simple';
+import {TagsGraphBuilder} from '../graph-builders/tags';
 
 
 export class GraphSettingsView extends ItemView {
@@ -51,7 +53,9 @@ export class GraphSettingsView extends ItemView {
      * @type {!Map<string, ValueComponent>}
      * @private
      */
-    this.settings_ = new Map();
+    this.valueComponents_ = new Map();
+
+    this.settings_ = [];
 
     /**
      * The current configuration of the graph builder.
@@ -99,6 +103,8 @@ export class GraphSettingsView extends ItemView {
     const setting = new Setting(this.contentEl);
     setting.nameEl.appendChild(document.createTextNode('Graph builder'));
     const buildersDropdown = new DropdownComponent(setting.controlEl);
+    buildersDropdown.onChange(this.updateSelectedBuilder_.bind(this));
+
     for (const [id, builderFn] of GraphBuilderRegistry.graphBuilders) {
       const builder = new builderFn();
       this.builders_.set(id, builder);
@@ -162,14 +168,14 @@ export class GraphSettingsView extends ItemView {
   }
 
   /**
-   * Creates the UI to configure a given graph builder.
-   * @param {GraphBuilder} builder The builder to create the config UI for.
+   * Creates the UI to configure a selected graph builder.
    * @private
    */
-  createConfigUI_(builder) {
-    const config = builder.getConfig();
+  createConfigUI_() {
+    const config = this.selectedBuilder_.getConfig();
     for (const opt of config) {
       const setting = new Setting(this.contentEl);
+      this.settings_.push(setting);
       setting.nameEl.appendChild(document.createTextNode(opt.displayText));
       switch(opt.type) {
         case 'toggle':
@@ -185,6 +191,14 @@ export class GraphSettingsView extends ItemView {
           throw 'Unknown config option type: ' + opt.type;
       }
     }
+  }
+
+  clearConfigUI_() {
+    for (const setting of this.settings_) {
+      this.contentEl.removeChild(setting.settingEl);
+    }
+    this.settings_.length = 0;
+    this.valueComponents_.clear();
   }
 
   /**
@@ -244,8 +258,30 @@ export class GraphSettingsView extends ItemView {
    * @private
    */
   subscribeToComponentChanges_(id, valueComponent) {
-    this.settings_.set(id, valueComponent);
+    this.valueComponents_.set(id, valueComponent);
     valueComponent.onChange(this.updateConfig_.bind(this));
+  }
+
+  updateSelectedBuilder_(id) {
+    this.selectedBuilder_ = this.builders_.get(id);
+    this.clearConfigUI_();
+    this.createConfigUI_();
+
+    this.sigma_.killForceAtlas2();
+
+    this.sigma_.graph.clear();
+    this.selectedBuilder_.setGraph(this.sigma_.graph);
+    this.currentBuilderConfig_ = this.generateConfig_();
+    this.selectedBuilder_.generateGraph(
+        this.currentBuilderConfig_, this.app.vault, this.app.metadataCache);
+
+    this.forceAtlas_ = this.sigma_.startForceAtlas2({
+      worker: true,
+      barnesHutOptimize: false,
+      startingIterations: 500,
+      scalingRatio: .025,
+      slowDown: 10,
+    });
   }
 
   /**
@@ -279,7 +315,7 @@ export class GraphSettingsView extends ItemView {
    */
   generateConfig_() {
     const config = new Map();
-    for (const [id, valueComponent] of this.settings_) {
+    for (const [id, valueComponent] of this.valueComponents_) {
       config.set(id, valueComponent.getValue());
     }
     return config;

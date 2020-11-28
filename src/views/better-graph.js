@@ -14,8 +14,6 @@
 // Obsidian imports
 import {ItemView, WorkspaceLeaf, Vault} from 'obsidian';
 import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from '../constants';
-import {SimpleGraphBuilder} from '../graph-builders/simple';
-import {GraphSettingsView} from './graph-settings';
 
 // Sigma imports
 import '../../sigma/src/sigma.core';
