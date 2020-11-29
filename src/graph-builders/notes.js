@@ -26,13 +26,13 @@ const ORPHANS = 'orphans';
 
 const MULT = 5;
 
-export class SimpleGraphBuilder extends GraphBuilder {
+export class NotesGraphBuilder extends GraphBuilder {
   /**
    * Returns the display name of this graph builder.
    * @return {string} The display name of this graph builder.
    */
   getDisplayName() {
-    return 'Simple';
+    return 'Notes';
   }
 
   /**
@@ -112,6 +112,11 @@ export class SimpleGraphBuilder extends GraphBuilder {
       return;
     }
 
+
+    // We should add orphans just in case the other config options need them
+    // available.
+    this.addOrphans_(files, metadataCache);
+
     if (oldConfig.get(TAGS) != newConfig.get(TAGS)) {
       if (newConfig.get(TAGS)) {
         this.addTags_(files, metadataCache);
@@ -133,12 +138,10 @@ export class SimpleGraphBuilder extends GraphBuilder {
         this.addNonExistingFiles_(files, metadataCache);
       }
     }
-    if (oldConfig.get(ORPHANS) != newConfig.get(ORPHANS)) {
-      if (newConfig.get(ORPHANS)) {
-        this.addOrphans_(files, metadataCache);
-      } else {
-        this.removeOrphans_(files, metadataCache);
-      }
+
+    // And remove any orphans once again (if orphans are disabled).
+    if (!newConfig.get(ORPHANS)) {
+      this.removeOrphans_(files, metadataCache)
     }
   }
 
@@ -150,13 +153,13 @@ export class SimpleGraphBuilder extends GraphBuilder {
    * @private
    */
   addExistingFiles_(files, metadataCache) {
-    const existingFileIds = new Set();
-    const edgeIds = new Set();
+    const createdFileIds = new Set();
+    const createdEdgeIds = new Set();
 
     // Create nodes.
     files.forEach((file) => {
       const id = metadataCache.fileToLinktext(file, file.path);
-      existingFileIds.add(id);
+      createdFileIds.add(id);
       this.graph_.addNode(new Node(
           id,
           file.basename,
@@ -175,14 +178,14 @@ export class SimpleGraphBuilder extends GraphBuilder {
         return;
       }
       cache.links.forEach((ref) => {
-        if (!existingFileIds.has(ref.link)) {
+        if (!createdFileIds.has(ref.link)) {
           return;
         }
         const edgeId = fileId + ' to ' + ref.link;
-        if (edgeIds.has(edgeId)) {
+        if (createdEdgeIds.has(edgeId)) {
           return;
         }
-        edgeIds.add(edgeId);
+        createdEdgeIds.add(edgeId);
         this.graph_.addEdge(new Edge(
             edgeId,
             fileId,
@@ -203,12 +206,13 @@ export class SimpleGraphBuilder extends GraphBuilder {
    */
   addNonExistingFiles_(files, metadataCache) {
     const existingFileIds = new Set();
+    const createdNonExistingIds = new Set();
+    const createdEdgeIds = new Set();
+
     files.forEach((file) => {
       existingFileIds.add(metadataCache.fileToLinktext(file, file.path));
     });
 
-    const createdNonExistingIds = new Set();
-    const createdEdgeIds = new Set();
     files.forEach((file) => {
       const fileId = metadataCache.fileToLinktext(file, file.path);
       const cache = metadataCache.getFileCache(file);
@@ -273,6 +277,8 @@ export class SimpleGraphBuilder extends GraphBuilder {
    */
   addTags_(files, metadataCache) {
     const createdTagIds = new Set();
+    const createdEdgeIds = new Set();
+
     files.forEach((file) => {
       const fileId = metadataCache.fileToLinktext(file, file.path);
       const cache = metadataCache.getFileCache(file);
@@ -292,8 +298,13 @@ export class SimpleGraphBuilder extends GraphBuilder {
           node.isTag = true;
           this.graph_.addNode(node);
         }
+        const edgeId = fileId + ' to ' + tagId;
+        if (createdEdgeIds.has(edgeId)) {
+          return;
+        }
+        createdEdgeIds.add(edgeId);
         this.graph_.addEdge(new Edge(
-            fileId + ' to ' + tagId,
+            edgeId,
             fileId,
             tagId,
             1,
@@ -357,6 +368,7 @@ export class SimpleGraphBuilder extends GraphBuilder {
         }
         createdEdgeIds.add(edgeId);
         this.graph_.addEdge(new Edge(
+           edgeId,
            fileId,
            attachmentId,
            1,
@@ -432,4 +444,4 @@ export class SimpleGraphBuilder extends GraphBuilder {
   }
 }
 
-GraphBuilderRegistry.register('simple-graph-builder', SimpleGraphBuilder);
+GraphBuilderRegistry.register('notes-graph-builder', NotesGraphBuilder);
