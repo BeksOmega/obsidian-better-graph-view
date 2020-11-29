@@ -151,6 +151,7 @@ export class SimpleGraphBuilder extends GraphBuilder {
    */
   addExistingFiles_(files, metadataCache) {
     const existingFileIds = new Set();
+    const edgeIds = new Set();
 
     // Create nodes.
     files.forEach((file) => {
@@ -177,8 +178,13 @@ export class SimpleGraphBuilder extends GraphBuilder {
         if (!existingFileIds.has(ref.link)) {
           return;
         }
+        const edgeId = fileId + ' to ' + ref.link;
+        if (edgeIds.has(edgeId)) {
+          return;
+        }
+        edgeIds.add(edgeId);
         this.graph_.addEdge(new Edge(
-            fileId + ' to ' + ref.link,
+            edgeId,
             fileId,
             ref.link,
             1,
@@ -202,6 +208,7 @@ export class SimpleGraphBuilder extends GraphBuilder {
     });
 
     const createdNonExistingIds = new Set();
+    const createdEdgeIds = new Set();
     files.forEach((file) => {
       const fileId = metadataCache.fileToLinktext(file, file.path);
       const cache = metadataCache.getFileCache(file);
@@ -226,8 +233,13 @@ export class SimpleGraphBuilder extends GraphBuilder {
           node.isNonExisting = true;
           this.graph_.addNode(node);
         }
+        const edgeId = fileId + ' to ' + ref.link;
+        if (createdEdgeIds.has(edgeId)) {
+          return;
+        }
+        createdEdgeIds.add(edgeId);
         this.graph_.addEdge(new Edge(
-            fileId + ' to ' + ref.link,
+            edgeId,
             fileId,
             ref.link,
             1,
@@ -316,6 +328,7 @@ export class SimpleGraphBuilder extends GraphBuilder {
    */
   addAttachments_(files, metadataCache) {
     const createdAttachmentIds = new Set();
+    const createdEdgeIds = new Set();
     files.forEach((file) => {
       const fileId = metadataCache.fileToLinktext(file, file.path);
       const cache = metadataCache.getFileCache(file);
@@ -338,8 +351,12 @@ export class SimpleGraphBuilder extends GraphBuilder {
           node.isAttachment = true;
           this.graph_.addNode(node);
         }
+        const edgeId = fileId + ' to ' + attachmentId;
+        if (createdEdgeIds.has(edgeId)) {
+          return;
+        }
+        createdEdgeIds.add(edgeId);
         this.graph_.addEdge(new Edge(
-           fileId + ' to ' + attachmentId,
            fileId,
            attachmentId,
            1,
