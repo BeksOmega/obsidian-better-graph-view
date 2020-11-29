@@ -12,9 +12,9 @@
 
 
 import {GraphBuilder} from './i-graphbuilder';
-import {Node} from "../../sigma/src/classes/sigma.classes.node";
-import {Edge} from "../../sigma/src/classes/sigma.classes.edge";
-import {GraphBuilderRegistry} from "./graph-builders-registry";
+import {Node} from '../../sigma/src/classes/sigma.classes.node';
+import {Edge} from '../../sigma/src/classes/sigma.classes.edge';
+import {GraphBuilderRegistry} from './graph-builders-registry';
 
 
 const NOTES = 'notes';
@@ -45,8 +45,8 @@ export class TagsGraphBuilder extends GraphBuilder {
   };
 
   /**
-   * Generates a graph that shows the connections between tags. Tags are
-   * connected if they appear together.
+   * Generates a graph that shows the connections between tags. Two tags are
+   * connected if there are one or more notes containing both tags.
    * @param {!Map<string, *>} config The current configuration of the graph.
    * @param {!Vault} vault The vault to use to generate the graph.
    * @param {!MetadataCache} metadataCache The metadata cache used to generate
@@ -89,8 +89,8 @@ export class TagsGraphBuilder extends GraphBuilder {
   }
 
   /**
-   * Adds nodes representing tags to the graph, and connects them. If two tags
-   * can be found in the same note, they are connected.
+   * Adds nodes representing tags to the graph, and connects them. Two tags are
+   * connected if there are one or more notes containing both tags.
    * @param {!Array<!TFile>} files All of the files in the vault.
    * @param {!MetadataCache} metadataCache The metadata cache used to generate
    *     the graph.

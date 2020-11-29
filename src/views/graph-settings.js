@@ -53,8 +53,14 @@ export class GraphSettingsView extends ItemView {
      * @type {!Map<string, ValueComponent>}
      * @private
      */
-    this.valueComponents_ = new Map();
+    this.configComponents_ = new Map();
 
+    /**
+     * A list of all of the current config Settings. Used to be able to easily
+     * remove them when we switch graph builders.
+     * @type {!Array}
+     * @private
+     */
     this.settings_ = [];
 
     /**
@@ -144,6 +150,7 @@ export class GraphSettingsView extends ItemView {
       }
     });
 
+    // TODO: Consolidate this with the below code in updateSelectedBuilder_.
     this.selectedBuilder_.setGraph(this.sigma_.graph);
     this.currentBuilderConfig_ = this.generateConfig_();
     this.selectedBuilder_.generateGraph(
@@ -171,8 +178,8 @@ export class GraphSettingsView extends ItemView {
    * Creates the UI to configure a selected graph builder.
    * @private
    */
-  createConfigUI_() {
-    const config = this.selectedBuilder_.getConfig();
+  createConfigUI_(builder) {
+    const config = builder.getConfig();
     for (const opt of config) {
       const setting = new Setting(this.contentEl);
       this.settings_.push(setting);
@@ -193,12 +200,17 @@ export class GraphSettingsView extends ItemView {
     }
   }
 
+  /**
+   * Removes all of the current configuration settings from the UI. Allows us to
+   * create a fresh UI using createConfigUI_.
+   * @private
+   */
   clearConfigUI_() {
     for (const setting of this.settings_) {
       this.contentEl.removeChild(setting.settingEl);
     }
     this.settings_.length = 0;
-    this.valueComponents_.clear();
+    this.configComponents_.clear();
   }
 
   /**
@@ -258,17 +270,24 @@ export class GraphSettingsView extends ItemView {
    * @private
    */
   subscribeToComponentChanges_(id, valueComponent) {
-    this.valueComponents_.set(id, valueComponent);
+    this.configComponents_.set(id, valueComponent);
     valueComponent.onChange(this.updateConfig_.bind(this));
   }
 
+  /**
+   * Changes the selected builder to the builder associated with the given id.
+   * Updates the config UI, graph, etc.
+   * @param {string} id The id of the new builder to select.
+   * @private
+   */
   updateSelectedBuilder_(id) {
     this.selectedBuilder_ = this.builders_.get(id);
     this.clearConfigUI_();
-    this.createConfigUI_();
+    this.createConfigUI_(this.selectedBuilder_);
 
     this.sigma_.killForceAtlas2();
 
+    // TODO: Consolidate this with the above code in setGraphView.
     this.sigma_.graph.clear();
     this.selectedBuilder_.setGraph(this.sigma_.graph);
     this.currentBuilderConfig_ = this.generateConfig_();
@@ -315,8 +334,8 @@ export class GraphSettingsView extends ItemView {
    */
   generateConfig_() {
     const config = new Map();
-    for (const [id, valueComponent] of this.valueComponents_) {
-      config.set(id, valueComponent.getValue());
+    for (const [id, configComponent] of this.configComponents_) {
+      config.set(id,configComponent.getValue());
     }
     return config;
   }
