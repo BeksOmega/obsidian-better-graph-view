@@ -59,10 +59,38 @@ export class TagsGraphBuilder extends GraphBuilder {
     }
 
     this.addTags_(files, metadataCache);
+    if (config.get(NOTES)) {
+      this.addNotes_(files, metadataCache);
+    }
   }
 
   /**
-   * Adds nodes representing tags to the graph, and connects them.
+   * Called when the config updates. Adds or removes nodes and edges as
+   * necessary.
+   * @param {!Map<string, *>} oldConfig The old configuration.
+   * @param {!Map<string, *>} newConfig The new configuration.
+   * @param {!Vault} vault The vault to used to generate the graph.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   */
+  onConfigUpdate(oldConfig, newConfig, vault, metadataCache) {
+    const files = vault.getMarkdownFiles();
+    if (!files) {
+      return;
+    }
+
+    if (oldConfig.get(NOTES) != newConfig.get(NOTES)) {
+      if (newConfig.get(NOTES)) {
+        this.addNotes_(files, metadataCache);
+      } else {
+        this.removeNotes_(files, metadataCache);
+      }
+    }
+  }
+
+  /**
+   * Adds nodes representing tags to the graph, and connects them. If two tags
+   * can be found in the same note, they are connected.
    * @param {!Array<!TFile>} files All of the files in the vault.
    * @param {!MetadataCache} metadataCache The metadata cache used to generate
    *     the graph.
@@ -123,6 +151,67 @@ export class TagsGraphBuilder extends GraphBuilder {
         })
       })
     });
+  }
+
+  /**
+   * Adds nodes representing existing notes to the graph. Only adds notes which
+   * include tags.
+   * @param {!Array<!TFile>} files All of the files in the vault.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   * @private
+   */
+  addNotes_(files, metadataCache) {
+    const createdEdgeIds = new Set();
+
+    files.forEach((file) => {
+      const cache = metadataCache.getFileCache(file);
+      if (!cache.tags) {
+        return;
+      }
+
+      const fileId = metadataCache.fileToLinktext(file, file.path);
+      const node = new Node(
+          fileId,
+          file.basename,
+          MULT * Math.random(),
+          MULT * Math.random(),
+          1,
+          '#ccc'
+      );
+      node.isNote = true;
+      this.graph_.addNode(node);
+
+      cache.tags.forEach((tagCache) => {
+        const edgeId = fileId + ' to ' + tagCache.tag;
+        if (createdEdgeIds.has(edgeId)) {
+          return;
+        }
+        createdEdgeIds.add(edgeId);
+        this.graph_.addEdge(new Edge(
+            edgeId,
+            fileId,
+            tagCache.tag,
+            1,
+            '#ccc'
+        ));
+      })
+    })
+  }
+
+  /**
+   * Removes nodes representing notes from the graph.
+   * @param {!Array<!TFile>} files All of the files in the vault.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   * @private
+   */
+  removeNotes_(files, metadataCache) {
+    this.graph_.nodes().forEach((node) => {
+      if (node.isNote) {
+        this.graph_.dropNode(node.id);
+      }
+    })
   }
 }
 
