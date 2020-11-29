@@ -21,7 +21,7 @@ import {
 import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from "../constants";
 import {GraphBuilderRegistry} from '../graph-builders/graph-builders-registry';
 import {GraphBuilder} from '../graph-builders/i-graphbuilder';
-import {SimpleGraphBuilder} from '../graph-builders/simple';
+import {NotesGraphBuilder} from '../graph-builders/notes';
 import {TagsGraphBuilder} from '../graph-builders/tags';
 
 
