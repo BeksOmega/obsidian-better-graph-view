@@ -14,6 +14,7 @@
 // Obsidian imports
 import {ItemView, WorkspaceLeaf, Vault} from 'obsidian';
 import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from '../constants';
+import * as PIXI from 'pixi.js';
 
 // Sigma imports
 import '../../sigma/src/sigma.core';
@@ -106,6 +107,29 @@ export class BetterGraphView extends ItemView {
     if (this.settingsView_) {
       this.settingsView_.view.setGraphView(this);
     }
+
+    // For testing PIXI!
+    this.pixi_ = new PIXI.Application({
+      antialias: true,
+      transparent: true,
+    });
+    this.graphContainer_.appendChild(this.pixi_.view);
+    this.onResize();
+
+    let circle = new PIXI.Graphics();
+    circle.beginFill(0x66ccff);
+    circle.lineStyle(4, 0xffee00, 1);
+    circle.drawCircle(0, 0, 32);
+    circle.endFill();
+    circle.x = 100;
+    circle.y = 100;
+    this.pixi_.stage.addChild(circle);
+  }
+
+  onResize() {
+    const rect = this.graphContainer_.getBoundingClientRect();
+    const container = this.graphContainer_;
+    this.pixi_.renderer.resize(container.offsetWidth, container.offsetHeight);
   }
 
   /**

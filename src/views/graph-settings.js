@@ -143,6 +143,7 @@ export class GraphSettingsView extends ItemView {
    * @param {BetterGraphView} graphView The better graph view.
    */
   setGraphView(graphView) {
+    return;
     this.sigma_ = new sigma({
       renderer: {
         container: graphView.getGraphContainer(),
