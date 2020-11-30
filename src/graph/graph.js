@@ -53,7 +53,7 @@ export class Graph {
    */
   removeNode(nodeId) {
     this.getConnectedEdges(nodeId).forEach(edgeId => this.removeEdge(edgeId));
-    this.nodes_.splice(this.nodes_.findIndex(n => n.getId() == nodeId), 1);
+    this.nodes_.splice(this.nodes_.findIndex(n => n.id == nodeId), 1);
   }
 
   /**
@@ -90,7 +90,7 @@ export class Graph {
    * @param {string} edgeId The id of the edge to remove from the graph.
    */
   removeEdge(edgeId) {
-    this.edges_.splice(this.edges_.findIndex(e => e.getId() == edgeId), 1);
+    this.edges_.splice(this.edges_.findIndex(e => e.id == edgeId), 1);
   }
 
   /**
@@ -127,7 +127,7 @@ export class Graph {
    *     given node id as the source or target id.
    */
   getConnectedEdges(nodeId) {
-    return edges.filter(e => e.getSourceId() == nodeId || e.getTargetId() == nodeId)
-        .map(e => e.getId());
+    return edges.filter(e => e.source == nodeId || e.target == nodeId)
+        .map(e => e.id);
   }
 }
