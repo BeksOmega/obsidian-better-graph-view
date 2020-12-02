@@ -67,6 +67,16 @@ export class Graph {
   }
 
   /**
+   * Returns the node with the specified id (if it exists).
+   * @param {string} nodeId The node id of the node we want to find.
+   * @return {?Node} The node with the specified id, or undefined if it does
+   *     not exist.
+   */
+  getNode(nodeId) {
+    return this.nodes_.find(node => node.id == nodeId);
+  }
+
+  /**
    * Returns a shallow copied array of all of the nodes in the graph.
    * @return {!Array<!Node>} All of the nodes in the graph.
    */
@@ -101,6 +111,16 @@ export class Graph {
    */
   hasEdge(edgeId) {
     return this.edges_.some(edge => edge.id == edgeId)
+  }
+
+  /**
+   * Returns the edge with the specified id (if it exists).
+   * @param {string} edgeId The edge id of the edge we want to find.
+   * @return {?Edge} The edge with the specified id, or undefined if it does
+   *     not exist.
+   */
+  getEdge(edgeId) {
+    return this.edges_.find(edge => edge.id == edgeId);
   }
 
   /**

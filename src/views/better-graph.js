@@ -122,6 +122,7 @@ export class BetterGraphView extends ItemView {
     });
     this.graphContainer_.appendChild(this.pixi_.view);
     this.onResize();
+    this.pixi_.stage.sortableChildren = true;
 
     // let circle = new PIXI.Graphics();
     // circle.beginFill(0x66ccff);
