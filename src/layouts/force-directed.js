@@ -30,9 +30,6 @@ export class ForceDirectedLayout extends Layout {
      */
     this.simulation_ = forceSimulation();
 
-    this.simulation_
-        .force('collide', forceCollide(32))
-        .force('center', forceCenter(250, 450));
 
     this.simulation_.on('tick', this.onSimulationUpdate.bind(this));
   }
@@ -46,6 +43,8 @@ export class ForceDirectedLayout extends Layout {
     this.graph_ = graph;
     this.simulation_
         .nodes(graph.getNodes())
+        .force('collide', forceCollide(32))
+        .force('center', forceCenter(250, 450))
         .restart();
   }
 

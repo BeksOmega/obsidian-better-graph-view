@@ -18,11 +18,22 @@ import {
   ToggleComponent,
   ValueComponent
 } from 'obsidian';
+
 import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from "../constants";
+
+import {Graph} from '../graph/graph';
 import {GraphBuilderRegistry} from '../graph-builders/graph-builders-registry';
 import {GraphBuilder} from '../graph-builders/i-graphbuilder';
 import {NotesGraphBuilder} from '../graph-builders/notes';
 import {TagsGraphBuilder} from '../graph-builders/tags';
+
+import {Layout} from '../layouts/i-layout';
+import {ForceDirectedLayout} from '../layouts/force-directed';
+
+import {Renderer} from '../renderers/i-renderer';
+import {SimpleRenderer} from '../renderers/simple';
+import * as PIXI from 'pixi.js';
+import {Viewport} from 'pixi-viewport';
 
 
 export class GraphSettingsView extends ItemView {
@@ -32,6 +43,20 @@ export class GraphSettingsView extends ItemView {
    */
   constructor(leaf) {
     super(leaf);
+
+    /**
+     * Reference to the better graph view.
+     * @type {BetterGraphView|null}
+     * @private
+     */
+    this.betterGraphView_ = null;
+
+    /**
+     * The PIXI application being used for rendering the graph.
+     * @type {PIXI.Application|null}
+     * @private
+     */
+    this.pixi_ = null;
 
     /**
      * Map of ids to graph builder instances.
@@ -71,18 +96,10 @@ export class GraphSettingsView extends ItemView {
     this.currentBuilderConfig_ = null;
 
     /**
-     * The sigma instance running the better graph view.
-     * @type {Object|null}
-     * @private
+     * The graph model being rendered.
+     * @type {!Graph}
      */
-    this.sigma_ = null;
-
-    /**
-     * The force atlas instance currently running.
-     * @type {Object|null}
-     * @private
-     */
-    this.forceAtlas_ = null;
+    this.graph_ = new Graph();
   }
 
   /**
@@ -127,52 +144,50 @@ export class GraphSettingsView extends ItemView {
     }
   }
 
-  /**
-   * Cleans up any references to facilitate garbage collection.
-   * @return {Promise<void>}
-   */
-  async onClose() {
-    if (this.sigma_) {
-      this.sigma_.kill();
-    }
-    return Promise.resolve();
+  onGraphResize() {
+    const container = this.betterGraphView_.getGraphContainer();
+    this.pixi_.renderer.resize(container.offsetWidth, container.offsetHeight);
   }
+
 
   /**
    * Sets the graph associated with this graph settings view.
    * @param {BetterGraphView} graphView The better graph view.
    */
   setGraphView(graphView) {
-    return;
-    this.sigma_ = new sigma({
-      renderer: {
-        container: graphView.getGraphContainer(),
-        type: 'canvas',
-      }
-    });
+    this.betterGraphView_ = graphView;
+    // TODO: Find a better fix than this hack.
+    graphView.onResize = this.onGraphResize.bind(this);
 
-    // TODO: Consolidate this with the below code in updateSelectedBuilder_.
-    this.selectedBuilder_.setGraph(this.sigma_.graph);
+    const container = graphView.getGraphContainer();
+    this.pixi_ = new PIXI.Application({
+      antialias: true,
+      transparent: true,
+    });
+    container.appendChild(this.pixi_.view);
+    this.viewport_ = new Viewport({
+      screenWidth: container.offsetWidth,
+      screenHeight: container.offsetHeight,
+      worldWidth: 1000,
+      worldHeight: 1000,
+      interaction: this.pixi_.renderer.plugins.interaction,
+    });
+    this.pixi_.stage.addChild(this.viewport_);
+    //this.viewport_.sortableChildren = true;
+    this.viewport_.drag();
+    /*this.viewport_
+        .drag()
+        .wheel({smooth: true});*/
+    this.onGraphResize();
+
+    this.selectedBuilder_.setGraph(this.graph_);
     this.currentBuilderConfig_ = this.generateConfig_();
     this.selectedBuilder_.generateGraph(
         this.currentBuilderConfig_, this.app.vault, this.app.metadataCache);
-
-    this.forceAtlas_ = this.sigma_.startForceAtlas2({
-      worker: true,
-      barnesHutOptimize: false,
-      startingIterations: 500,
-      scalingRatio: .025,
-      slowDown: 10,
-    });
-
-    const dragListener = sigma.plugins.dragNodes(
-        this.sigma_, this.sigma_.renderers[0]);
-    dragListener.bind('startdrag', (event) => {
-      this.forceAtlas_.supervisor.setDraggingNode(event.data.node);
-    });
-    dragListener.bind('dragend', (event) => {
-      this.forceAtlas_.supervisor.setDraggingNode(null);
-    });
+    const renderer = new SimpleRenderer(this.pixi_, this.viewport_);
+    const layout = new ForceDirectedLayout();
+    renderer.setLayout(layout);
+    layout.setGraphBuilder(this.selectedBuilder_);
   }
 
   /**

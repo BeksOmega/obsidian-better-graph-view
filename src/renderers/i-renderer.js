@@ -23,8 +23,9 @@ export class Renderer {
    * @param {!PIXI.Application} pixiApp The pixi application this renderer
    *     will render to.
    */
-  constructor(pixiApp) {
+  constructor(pixiApp, viewport) {
     this.pixi_ = pixiApp;
+    this.viewport_ = viewport;
   }
 
   /**
