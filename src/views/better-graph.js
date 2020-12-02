@@ -57,6 +57,10 @@ import '../../sigma/plugins/sigma.layout.forceAtlas2/supervisor';
 // Sigma drag imports.
 import '../../sigma/plugins/sigma.plugins.dragNodes/sigma.plugins.dragNodes';
 
+import {NotesGraphBuilder} from '../graph-builders/notes';
+import {ForceDirected1} from '../layouts/force-directed-1';
+import {Graph} from '../graph/graph';
+
 
 export class BetterGraphView extends ItemView {
 
@@ -124,6 +128,13 @@ export class BetterGraphView extends ItemView {
     circle.x = 100;
     circle.y = 100;
     this.pixi_.stage.addChild(circle);
+
+    // For testing d3!
+    const graph = new Graph();
+    const builder = new NotesGraphBuilder();
+    builder.setGraph(graph);
+    const layout = new ForceDirected1();
+    layout.setGraphBuilder(builder);
   }
 
   onResize() {

@@ -67,7 +67,7 @@ export class Graph {
   }
 
   /**
-   * Returns an array of all of the nodes in the graph.
+   * Returns a shallow copied array of all of the nodes in the graph.
    * @return {!Array<!Node>} All of the nodes in the graph.
    */
   getNodes() {
@@ -104,7 +104,7 @@ export class Graph {
   }
 
   /**
-   * Returns an array of all of the edges in the graph.
+   * Returns a shallow copied array of all of the edges in the graph.
    * @return {!Array<!Edge>} All of the edges in the graph.
    */
   getEdges() {

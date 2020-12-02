@@ -19,6 +19,7 @@
     "rollup": "^2.32.1"
   },
   "dependencies": {
+    "d3-force": "^2.1.1",
     "pixi.js": "^5.3.3"
   }
 }
