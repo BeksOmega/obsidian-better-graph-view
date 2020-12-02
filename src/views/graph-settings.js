@@ -147,8 +147,9 @@ export class GraphSettingsView extends ItemView {
   onGraphResize() {
     const container = this.betterGraphView_.getGraphContainer();
     this.pixi_.renderer.resize(container.offsetWidth, container.offsetHeight);
+    this.viewport_.screenWidth = container.offsetWidth;
+    this.viewport_.screenHeight = container.offsetHeight;
   }
-
 
   /**
    * Sets the graph associated with this graph settings view.
@@ -173,11 +174,10 @@ export class GraphSettingsView extends ItemView {
       interaction: this.pixi_.renderer.plugins.interaction,
     });
     this.pixi_.stage.addChild(this.viewport_);
-    //this.viewport_.sortableChildren = true;
-    this.viewport_.drag();
-    /*this.viewport_
+    this.viewport_.sortableChildren = true;
+    this.viewport_
         .drag()
-        .wheel({smooth: true});*/
+        .wheel({smooth: 10});
     this.onGraphResize();
 
     this.selectedBuilder_.setGraph(this.graph_);
