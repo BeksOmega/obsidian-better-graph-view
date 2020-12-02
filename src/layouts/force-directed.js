@@ -5,10 +5,7 @@
  */
 
 /**
- * @fileoverview Class for the first force-directed layout algorithm. Layout
- *     algorithms define where the nodes are positioned in the. They do *not*
- *     define which nodes are connected to other nodes (that is the job of a
- *     graph builder).
+ * @fileoverview Class for the first force-directed layout algorithm.
  * @author bekawestberg@gmail.com (Beka Westberg)
  */
 'use strict';
@@ -41,7 +38,8 @@ export class ForceDirectedLayout extends Layout {
   }
 
   /**
-   * Called when the structure of the graph updates.
+   * Called when the structure of the graph updates. Passes the new structure
+   * to the simulation.
    * @param {Graph} graph The graph that has been updated.
    */
   onGraphUpdate(graph) {
@@ -52,7 +50,7 @@ export class ForceDirectedLayout extends Layout {
   }
 
   /**
-   * Called when the simulation updates.
+   * Called when the simulation updates. Triggers the layout update event.
    */
   onSimulationUpdate() {
     this.trigger('layout-update', this.graph_);

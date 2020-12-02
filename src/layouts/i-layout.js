@@ -6,8 +6,8 @@
 
 /**
  * @fileoverview Interface for a layout algorithm. Layout algorithms define
- *     where the nodes are positioned in the. They do *not* define which nodes
- *     are connected to other nodes (that is the job of a graph builder).
+ *     where the nodes are positioned. They do *not* define which nodes are
+ *     connected to other nodes (that is the job of a graph builder).
  * @author bekawestberg@gmail.com (Beka Westberg)
  */
 'use strict';

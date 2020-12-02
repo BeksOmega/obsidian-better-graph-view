@@ -127,7 +127,7 @@ export class Simple extends Renderer {
   /**
    * Adds any edges in the edge list that are not currently rendered, and
    * updates all of the rendered edges to match the data in the graph model.
-   * @param {!Array<!Edge>} edges All of the edges in the graph.
+   * @param {!Array<!Edge>} edges The current edges in teh graph.
    * @param {!Graph} graph The current graph.
    * @private
    */
