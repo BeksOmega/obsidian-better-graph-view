@@ -57,6 +57,13 @@ import '../../sigma/plugins/sigma.layout.forceAtlas2/supervisor';
 // Sigma drag imports.
 import '../../sigma/plugins/sigma.plugins.dragNodes/sigma.plugins.dragNodes';
 
+import {NotesGraphBuilder} from '../graph-builders/notes';
+import {ForceDirectedLayout} from '../layouts/force-directed';
+import {Graph} from '../graph/graph';
+import {Simple} from '../renderers/simple';
+import {Node} from '../graph/node';
+import {Edge} from '../graph/edge';
+
 
 export class BetterGraphView extends ItemView {
 
@@ -115,15 +122,28 @@ export class BetterGraphView extends ItemView {
     });
     this.graphContainer_.appendChild(this.pixi_.view);
     this.onResize();
+    this.pixi_.stage.sortableChildren = true;
 
-    let circle = new PIXI.Graphics();
-    circle.beginFill(0x66ccff);
-    circle.lineStyle(4, 0xffee00, 1);
-    circle.drawCircle(0, 0, 32);
-    circle.endFill();
-    circle.x = 100;
-    circle.y = 100;
-    this.pixi_.stage.addChild(circle);
+    // let circle = new PIXI.Graphics();
+    // circle.beginFill(0x66ccff);
+    // circle.lineStyle(4, 0xffee00, 1);
+    // circle.drawCircle(0, 0, 32);
+    // circle.endFill();
+    // circle.x = 100;
+    // circle.y = 100;
+    // this.pixi_.stage.addChild(circle);
+
+    // For testing d3!
+    const graph = new Graph();
+    graph.addNode(new Node('test'));
+    graph.addNode(new Node('test2'));
+    graph.addEdge(new Edge('test to test2', 'test', 'test2'));
+    const builder = new NotesGraphBuilder();
+    const renderer = new Simple(this.pixi_);
+    const layout = new ForceDirectedLayout();
+    renderer.setLayout(layout);
+    builder.setGraph(graph);
+    layout.setGraphBuilder(builder);
   }
 
   onResize() {

@@ -261,9 +261,9 @@ export class NotesGraphBuilder extends GraphBuilder {
    * @private
    */
   removeNonExistingFiles_(files, metadataCache) {
-    for (const node of this.graph_.nodes()) {
+    for (const node of this.graph_.getNodes()) {
       if (node.isNonExisting) {
-        this.graph_.dropNode(node.id);
+        this.graph_.removeNode(node.id);
       }
     }
   }
@@ -322,9 +322,9 @@ export class NotesGraphBuilder extends GraphBuilder {
    * @private
    */
   removeTags_(files, metadataCache) {
-    for (const node of this.graph_.nodes()) {
+    for (const node of this.graph_.getNodes()) {
       if (node.isTag) {
-        this.graph_.dropNode(node.id);
+        this.graph_.removeNode(node.id);
       }
     }
   }
@@ -386,9 +386,9 @@ export class NotesGraphBuilder extends GraphBuilder {
    * @private
    */
   removeAttachments_(files, metadataCache) {
-    for (const node of this.graph_.nodes()) {
+    for (const node of this.graph_.getNodes()) {
       if (node.isAttachment) {
-        this.graph_.dropNode(node.id);
+        this.graph_.removeNode(node.id);
       }
     }
   }
@@ -402,7 +402,7 @@ export class NotesGraphBuilder extends GraphBuilder {
    */
   addOrphans_(files, metadataCache) {
     const existingNodeIds = new Set();
-    this.graph_.nodes().forEach((node) => {
+    this.graph_.getNodes().forEach((node) => {
       existingNodeIds.add(node.id);
     });
 
@@ -431,14 +431,14 @@ export class NotesGraphBuilder extends GraphBuilder {
   removeOrphans_(files, metadataCache) {
     const referencedNodeIds = new Set();
 
-    this.graph_.edges().forEach((edge) => {
+    this.graph_.getEdges().forEach((edge) => {
       referencedNodeIds.add(edge.source);
       referencedNodeIds.add(edge.target);
     });
 
-    this.graph_.nodes().forEach((node) => {
+    this.graph_.getNodes().forEach((node) => {
       if (!referencedNodeIds.has(node.id)) {
-        this.graph_.dropNode(node.id);
+        this.graph_.removeNode(node.id);
       }
     })
   }

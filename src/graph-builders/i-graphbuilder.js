@@ -12,7 +12,8 @@
 'use strict';
 
 
-import {Vault, MetadataCache} from 'obsidian';
+import {Vault, MetadataCache, Events, EventRef} from 'obsidian';
+import {Graph} from '../graph/graph';
 
 
 /**
@@ -20,38 +21,7 @@ import {Vault, MetadataCache} from 'obsidian';
  * graph.
  * @interface
  */
-export class GraphBuilder {
-
-  /**
-   * Sets the graph we will build.
-   * @param {Object} graph The graph we will build.
-   */
-  setGraph(graph) {
-    this.graph_ = graph;
-  }
-
-  /**
-   * Generates a graph for the given vault.
-   * @param {!Map<string, *>} config The current configuration of the graph
-   *     builder.
-   * @param {!Vault} vault The vault to used to generate the graph.
-   * @param {!MetadataCache} metadataCache The metadata cache used to generate
-   *     the graph.
-   */
-  generateGraph(config, vault, metadataCache) {}
-
-
-  /**
-   * Called when the configuration updates. Graph should be modified
-   * accordingly.
-   * @param {!Map<string, *>} oldConfig The old configuration.
-   * @param {!Map<string, *>} newConfig The new configuration.
-   * @param {!Vault} vault The vault to used to generate the graph.
-   * @param {!MetadataCache} metadataCache The metadata cache used to generate
-   *     the graph.
-   */
-  onConfigUpdate(oldConfig, newConfig, vault, metadataCache) {}
-
+export class GraphBuilder extends Events {
   /**
    * Returns the display name of this graph builder.
    * @return {string} The display name of this graph builder.
@@ -100,5 +70,59 @@ export class GraphBuilder {
    */
   getConfig() {
     return [];
+  }
+
+  /**
+   * Sets the graph we will build.
+   * @param {Graph} graph The graph we will build.
+   */
+  setGraph(graph) {
+    this.graph_ = graph;
+  }
+
+  /**
+   * Returns the graph of the graph builder.
+   * @return {Graph} The graph of the graph builder.
+   */
+  getGraph() {
+    return this.graph_;
+  }
+
+  /**
+   * Generates a graph for the given vault.
+   * @param {!Map<string, *>} config The current configuration of the graph
+   *     builder.
+   * @param {!Vault} vault The vault to used to generate the graph.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   */
+  generateGraph(config, vault, metadataCache) {}
+
+  /**
+   * Called when the configuration updates. Graph should be modified
+   * accordingly.
+   * @param {!Map<string, *>} oldConfig The old configuration.
+   * @param {!Map<string, *>} newConfig The new configuration.
+   * @param {!Vault} vault The vault to used to generate the graph.
+   * @param {!MetadataCache} metadataCache The metadata cache used to generate
+   *     the graph.
+   */
+  onConfigUpdate(oldConfig, newConfig, vault, metadataCache) {}
+
+  /**
+   * Adds a listener to events from this graph builder.
+   * @param {string} name The name of the event to listen to. Currently supports:
+   *   - 'structure-update'
+   * @param {function(*): *} callback The listener to call.
+   * @param {?Object} ctx The context to call the event in.
+   * @return {!EventRef} The reference to the subscribed event.
+   * @throws If the passed name is not a valid event name.
+   */
+  on(name, callback, ctx) {
+    if (name == 'structure-update') {
+      return super.on(name, callback, ctx);
+    } else {
+      throw 'Unknown graph builder event: "' + name + '".';
+    }
   }
 }
