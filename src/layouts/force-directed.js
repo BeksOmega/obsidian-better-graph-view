@@ -17,7 +17,7 @@ import {forceSimulation, forceCenter, forceCollide} from 'd3-force';
 import {Layout} from './i-layout';
 import {Graph} from '../graph/graph';
 
-export class ForceDirected1 extends Layout {
+export class ForceDirectedLayout extends Layout {
   constructor() {
     super();
     /**
@@ -34,8 +34,8 @@ export class ForceDirected1 extends Layout {
     this.simulation_ = forceSimulation();
 
     this.simulation_
-        .force('collide', forceCollide())
-        .force('center', forceCenter());
+        .force('collide', forceCollide(32))
+        .force('center', forceCenter(250, 450));
 
     this.simulation_.on('tick', this.onSimulationUpdate.bind(this));
   }
