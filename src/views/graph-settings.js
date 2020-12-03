@@ -316,8 +316,6 @@ export class GraphSettingsView extends ItemView {
    * @private
    */
   updateConfig_() {
-    this.sigma_.killForceAtlas2();
-
     const newConfig = this.generateConfig_();
     this.selectedBuilder_.onConfigUpdate(
         this.currentBuilderConfig_,
@@ -325,14 +323,6 @@ export class GraphSettingsView extends ItemView {
         this.app.vault,
         this.app.metadataCache);
     this.currentBuilderConfig_ = newConfig;
-
-    this.forceAtlas_ = this.sigma_.startForceAtlas2({
-      worker: true,
-      barnesHutOptimize: false,
-      startingIterations: 500,
-      scalingRatio: .025,
-      slowDown: 10,
-    });
   }
 
   /**

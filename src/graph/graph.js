@@ -147,7 +147,9 @@ export class Graph {
    *     given node id as the source or target id.
    */
   getConnectedEdges(nodeId) {
-    return edges.filter(e => e.source == nodeId || e.target == nodeId)
-        .map(e => e.id);
+    return this.edges_.filter((edge) => {
+      return edge.source.id == nodeId || edge.source == nodeId ||
+          edge.target.id == nodeId || edge.target == nodeId;
+    }).map(e => e.id);
   }
 }

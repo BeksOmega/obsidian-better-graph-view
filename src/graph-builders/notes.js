@@ -143,6 +143,8 @@ export class NotesGraphBuilder extends GraphBuilder {
     if (!newConfig.get(ORPHANS)) {
       this.removeOrphans_(files, metadataCache)
     }
+
+    this.trigger('structure-update', this.graph_);
   }
 
   /**
@@ -160,14 +162,7 @@ export class NotesGraphBuilder extends GraphBuilder {
     files.forEach((file) => {
       const id = metadataCache.fileToLinktext(file, file.path);
       createdFileIds.add(id);
-      this.graph_.addNode(new Node(
-          id,
-          file.basename,
-          MULT * Math.random(),
-          MULT * Math.random(),
-          1,
-          '#666'
-      ));
+      this.graph_.addNode(new Node(id, file.basename));
     });
 
     // Create edges.
@@ -186,11 +181,7 @@ export class NotesGraphBuilder extends GraphBuilder {
           return;
         }
         createdEdgeIds.add(edgeId);
-        this.graph_.addEdge(new Edge(
-            edgeId,
-            fileId,
-            ref.link,
-        ));
+        this.graph_.addEdge(new Edge(edgeId, fileId, ref.link));
       })
     });
   }
@@ -224,14 +215,7 @@ export class NotesGraphBuilder extends GraphBuilder {
         }
         if (!createdNonExistingIds.has(ref.link)) {
           createdNonExistingIds.add(ref.link);
-          const node = new Node(
-              ref.link,
-              ref.link,
-              MULT * Math.random(),
-              MULT * Math.random(),
-              1,
-              '#ccc'
-          );
+          const node = new Node(ref.link, ref.link);
           node.isNonExisting = true;
           this.graph_.addNode(node);
         }
@@ -240,11 +224,7 @@ export class NotesGraphBuilder extends GraphBuilder {
           return;
         }
         createdEdgeIds.add(edgeId);
-        this.graph_.addEdge(new Edge(
-            edgeId,
-            fileId,
-            ref.link,
-        ));
+        this.graph_.addEdge(new Edge(edgeId, fileId, ref.link));
       })
     });
   }
@@ -283,14 +263,7 @@ export class NotesGraphBuilder extends GraphBuilder {
         const tagId = 'tag' + tag;
         if (!createdTagIds.has(tagId)) {
           createdTagIds.add(tagId);
-          const node = new Node(
-              tagId,
-              tag,
-              MULT * Math.random(),
-              MULT * Math.random(),
-              1,
-              '#800080'
-          );
+          const node = new Node(tagId, tag);
           node.isTag = true;
           this.graph_.addNode(node);
         }
@@ -299,11 +272,7 @@ export class NotesGraphBuilder extends GraphBuilder {
           return;
         }
         createdEdgeIds.add(edgeId);
-        this.graph_.addEdge(new Edge(
-            edgeId,
-            fileId,
-            tagId,
-        ));
+        this.graph_.addEdge(new Edge(edgeId, fileId, tagId));
       })
     })
   }
@@ -345,14 +314,7 @@ export class NotesGraphBuilder extends GraphBuilder {
         const attachmentId = 'attachment' + attachment.link;
         if (!createdAttachmentIds.has(attachmentId)) {
           createdAttachmentIds.add(attachmentId);
-          const node = new Node(
-              attachmentId,
-              attachment.link,
-              MULT * Math.random(),
-              MULT * Math.random(),
-              1,
-              '#E6E6FA'
-          );
+          const node = new Node(attachmentId, attachment.link);
           node.isAttachment = true;
           this.graph_.addNode(node);
         }
@@ -361,11 +323,7 @@ export class NotesGraphBuilder extends GraphBuilder {
           return;
         }
         createdEdgeIds.add(edgeId);
-        this.graph_.addEdge(new Edge(
-           edgeId,
-           fileId,
-           attachmentId,
-        ));
+        this.graph_.addEdge(new Edge(edgeId, fileId, attachmentId));
       });
     })
   }
@@ -401,14 +359,7 @@ export class NotesGraphBuilder extends GraphBuilder {
     files.forEach((file) => {
       const id = metadataCache.fileToLinktext(file, file.path);
       if (!existingNodeIds.has(id)) {
-        this.graph_.addNode(new Node(
-            id,
-            file.basename,
-            MULT * Math.random(),
-            MULT * Math.random(),
-            1,
-            '#666'
-        ));
+        this.graph_.addNode(new Node(id, file.basename));
       }
     });
   }
@@ -424,8 +375,11 @@ export class NotesGraphBuilder extends GraphBuilder {
     const referencedNodeIds = new Set();
 
     this.graph_.getEdges().forEach((edge) => {
-      referencedNodeIds.add(edge.source);
-      referencedNodeIds.add(edge.target);
+      referencedNodeIds.add(
+          typeof edge.source == 'object' ? edge.source.id : edge.source);
+      referencedNodeIds.add(
+          typeof edge.target == 'object' ? edge.target.id : edge.target);
+
     });
 
     this.graph_.getNodes().forEach((node) => {
