@@ -27,13 +27,13 @@ export class Edge {
 
     /**
      * The id of the source node.
-     * @type {string}
+     * @type {string|Node}
      */
     this.source = sourceId;
 
     /**
      * The id of the target node.
-     * @type {string}
+     * @type {string|Node}
      */
     this.target = targetId;
   }

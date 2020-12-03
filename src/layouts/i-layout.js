@@ -28,7 +28,6 @@ export class Layout extends Events {
    */
   setGraphBuilder(graphBuilder) {
     graphBuilder.on('structure-update', this.onGraphUpdate, this);
-    this.onGraphUpdate(graphBuilder.getGraph());
   }
 
   /**

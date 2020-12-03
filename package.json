@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "d3-force": "^2.1.1",
+    "pixi-viewport": "^4.18.1",
     "pixi.js": "^5.3.3"
   }
 }

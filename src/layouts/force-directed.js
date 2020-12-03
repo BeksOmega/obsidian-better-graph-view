@@ -10,9 +10,13 @@
  */
 'use strict';
 
-import {forceSimulation, forceCenter, forceCollide} from 'd3-force';
+
+import {forceSimulation, forceLink, forceManyBody, forceX, forceY} from 'd3-force';
 import {Layout} from './i-layout';
 import {Graph} from '../graph/graph';
+
+
+const START_ITERATIONS = 500;
 
 export class ForceDirectedLayout extends Layout {
   constructor() {
@@ -30,11 +34,22 @@ export class ForceDirectedLayout extends Layout {
      */
     this.simulation_ = forceSimulation();
 
-    this.simulation_
-        .force('collide', forceCollide(32))
-        .force('center', forceCenter(250, 450));
+    /**
+     * The link force associated with this layout.
+     * @type {force}
+     */
+    this.linkForce_ = forceLink();
 
-    this.simulation_.on('tick', this.onSimulationUpdate.bind(this));
+    this.linkForce_
+        .id(node => node.id)
+        .distance(0);
+
+    this.simulation_
+        .force('link', this.linkForce_)
+        .force('x', forceX(0).strength(.2))
+        .force('y', forceY(0).strength(.2))
+        .force('repel', forceManyBody().strength(-50))
+        .on('tick', this.onSimulationUpdate.bind(this));
   }
 
   /**
@@ -44,9 +59,10 @@ export class ForceDirectedLayout extends Layout {
    */
   onGraphUpdate(graph) {
     this.graph_ = graph;
-    this.simulation_
-        .nodes(graph.getNodes())
-        .restart();
+    // Nodes must be updated before links.
+    this.simulation_.nodes(graph.getNodes());
+    this.linkForce_.links(this.graph_.getEdges());
+    this.simulation_.alpha(1).restart();
   }
 
   /**

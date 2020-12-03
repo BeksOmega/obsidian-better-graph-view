@@ -12,13 +12,12 @@
 
 
 import {GraphBuilder} from './i-graphbuilder';
-import {Node} from '../../sigma/src/classes/sigma.classes.node';
-import {Edge} from '../../sigma/src/classes/sigma.classes.edge';
+import {Node} from '../graph/node';
+import {Edge} from '../graph/edge';
 import {GraphBuilderRegistry} from './graph-builders-registry';
 
 
 const NOTES = 'notes';
-const MULT = 5;
 
 export class TagsGraphBuilder extends GraphBuilder {
   /**
@@ -62,6 +61,8 @@ export class TagsGraphBuilder extends GraphBuilder {
     if (config.get(NOTES)) {
       this.addNotes_(files, metadataCache);
     }
+
+    this.trigger('structure-update', this.graph_);
   }
 
   /**
@@ -86,6 +87,8 @@ export class TagsGraphBuilder extends GraphBuilder {
         this.removeNotes_(files, metadataCache);
       }
     }
+
+    this.trigger('structure-update', this.graph_);
   }
 
   /**
@@ -110,14 +113,7 @@ export class TagsGraphBuilder extends GraphBuilder {
       cache.tags.forEach((tagCache) => {
         if (!createdTagIds.has(tagCache.tag)) {
           createdTagIds.add(tagCache.tag);
-          this.graph_.addNode(new Node(
-              tagCache.tag,
-              tagCache.tag,
-              MULT * Math.random(),
-              MULT * Math.random(),
-              1,
-              '#666'
-          ));
+          this.graph_.addNode(new Node(tagCache.tag, tagCache.tag));
         }
       });
 
@@ -134,20 +130,8 @@ export class TagsGraphBuilder extends GraphBuilder {
           }
           createdEdgeIds.add(edgeId1);
           createdEdgeIds.add(edgeId2);
-          this.graph_.addEdge(new Edge(
-              edgeId1,
-              tagCache1.tag,
-              tagCache2.tag,
-              1,
-              '#ccc'
-          ));
-          this.graph_.addEdge(new Edge(
-              edgeId2,
-              tagCache2.tag,
-              tagCache1.tag,
-              1,
-              '#ccc'
-          ));
+          this.graph_.addEdge(new Edge(edgeId1, tagCache1.tag, tagCache2.tag));
+          this.graph_.addEdge(new Edge(edgeId2, tagCache2.tag, tagCache1.tag));
         })
       })
     });
@@ -171,14 +155,7 @@ export class TagsGraphBuilder extends GraphBuilder {
       }
 
       const fileId = metadataCache.fileToLinktext(file, file.path);
-      const node = new Node(
-          fileId,
-          file.basename,
-          MULT * Math.random(),
-          MULT * Math.random(),
-          1,
-          '#ccc'
-      );
+      const node = new Node(fileId, file.basename);
       node.isNote = true;
       this.graph_.addNode(node);
 
@@ -188,13 +165,7 @@ export class TagsGraphBuilder extends GraphBuilder {
           return;
         }
         createdEdgeIds.add(edgeId);
-        this.graph_.addEdge(new Edge(
-            edgeId,
-            fileId,
-            tagCache.tag,
-            1,
-            '#ccc'
-        ));
+        this.graph_.addEdge(new Edge(edgeId, fileId, tagCache.tag));
       })
     })
   }
@@ -207,9 +178,9 @@ export class TagsGraphBuilder extends GraphBuilder {
    * @private
    */
   removeNotes_(files, metadataCache) {
-    this.graph_.nodes().forEach((node) => {
+    this.graph_.getNodes().forEach((node) => {
       if (node.isNote) {
-        this.graph_.dropNode(node.id);
+        this.graph_.removeNode(node.id);
       }
     })
   }

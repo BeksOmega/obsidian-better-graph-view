@@ -17,14 +17,15 @@ import {Graph} from '../graph/graph';
 import * as PIXI from 'pixi.js';
 
 
-export class Simple extends Renderer {
+export class SimpleRenderer extends Renderer {
   /**
-   * Constructs the simple renderer.
-   * @param {!PIXI.Application} pixiApp The pixi application this renderer
-   *     will render to.
+   * Constructs the simple renderer. This render is meant to emulate obsidian's
+   * default renderer.
+   * @param {!PIXI.Application} pixiApp The pixi application handling our render.
+   * @param {!Viewport} viewport The viewport this renderer will render to.
    */
-  constructor(pixiApp) {
-    super(pixiApp);
+  constructor(pixiApp, viewport) {
+    super(pixiApp, viewport);
 
     /**
      * Map of node ids to containers (which render the nodes).
@@ -67,8 +68,9 @@ export class Simple extends Renderer {
     nodes.forEach(node => nodesInGraph.add(node.id));
     for (const [id, container] of this.nodesMap_) {
       if (!nodesInGraph.has(id)) {
-        this.pixi_.stage.removeChild(container);
+        this.viewport_.removeChild(container);
         container.destroy({children: true});
+        this.nodesMap_.delete(id);
       }
     }
   }
@@ -87,10 +89,10 @@ export class Simple extends Renderer {
       container.zIndex = 1;
       const circle = new PIXI.Graphics();
       circle.beginFill(0x666666);
-      circle.drawCircle(0, 0, 32);
+      circle.drawCircle(0, 0, 4);
       circle.endFill();
 
-      this.pixi_.stage.addChild(container);
+      this.viewport_.addChild(container);
       container.addChild(circle);
       this.nodesMap_.set(node.id, container);
     })
@@ -118,8 +120,9 @@ export class Simple extends Renderer {
     edges.forEach(edge => edgesInGraph.add(edge.id));
     for (const [id, container] of this.edgesMap_) {
       if (!edgesInGraph.has(id)) {
-        this.pixi_.stage.removeChild(container);
+        this.viewport_.removeChild(container);
         container.destroy({children: true});
+        this.edgesMap_.delete(id);
       }
     }
   }
@@ -148,7 +151,7 @@ export class Simple extends Renderer {
   addEdge_(edge) {
     const container = new PIXI.Container();
     const line = new PIXI.Graphics();
-    this.pixi_.stage.addChild(container);
+    this.viewport_.addChild(container);
     container.addChild(line);
     this.edgesMap_.set(edge.id, container);
   }
@@ -162,12 +165,14 @@ export class Simple extends Renderer {
    * @private
    */
   layoutEdge_(edge, container, graph) {
-    const sourceNode = graph.getNode(edge.source);
-    const targetNode = graph.getNode(edge.target);
+    const sourceNode = typeof edge.source == 'object' ?
+        edge.source : graph.getNode(edge.source);
+    const targetNode = typeof edge.target == 'object' ?
+        edge.target : graph.getNode(edge.target);
 
     const line = container.getChildAt(0);
     line.clear();
-    line.lineStyle(2, 0xcccccc, 1);
+    line.lineStyle(1, 0xcccccc, 1);
     line.moveTo(sourceNode.x, sourceNode.y);
     line.lineTo(targetNode.x, targetNode.y);
   }
