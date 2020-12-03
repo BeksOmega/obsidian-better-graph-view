@@ -31,7 +31,6 @@ export class Layout extends Events {
       throw 'Graph builder does not have a graph set.';
     }
     graphBuilder.on('structure-update', this.onGraphUpdate, this);
-    this.onGraphUpdate(graphBuilder.getGraph());
   }
 
   /**

@@ -18,7 +18,6 @@ import {GraphBuilderRegistry} from './graph-builders-registry';
 
 
 const NOTES = 'notes';
-const MULT = 5;
 
 export class TagsGraphBuilder extends GraphBuilder {
   /**
@@ -62,6 +61,8 @@ export class TagsGraphBuilder extends GraphBuilder {
     if (config.get(NOTES)) {
       this.addNotes_(files, metadataCache);
     }
+
+    this.trigger('structure-update', this.graph_);
   }
 
   /**

@@ -180,15 +180,17 @@ export class GraphSettingsView extends ItemView {
         .wheel({smooth: 10});
     this.onGraphResize();
 
+    this.selectedRenderer_ = new SimpleRenderer(this.pixi_, this.viewport_);
+    this.selectedLayout_ = new ForceDirectedLayout();
+
     // TOOD: Unify with updateSelectedBuilder_ below.
     this.selectedBuilder_.setGraph(this.graph_);
+    this.selectedLayout_.setGraphBuilder(this.selectedBuilder_);
+    this.selectedRenderer_.setLayout(this.selectedLayout_);
+
     this.currentBuilderConfig_ = this.generateConfig_();
     this.selectedBuilder_.generateGraph(
         this.currentBuilderConfig_, this.app.vault, this.app.metadataCache);
-    this.selectedRenderer_ = new SimpleRenderer(this.pixi_, this.viewport_);
-    this.selectedLayout_ = new ForceDirectedLayout();
-    this.selectedRenderer_.setLayout(this.selectedLayout_);
-    this.selectedLayout_.setGraphBuilder(this.selectedBuilder_);
   }
 
   /**
@@ -304,11 +306,12 @@ export class GraphSettingsView extends ItemView {
 
     this.graph_.clear();
     this.selectedBuilder_.setGraph(this.graph_);
+    this.selectedLayout_.setGraphBuilder(this.selectedBuilder_);
+    this.selectedRenderer_.setLayout(this.selectedLayout_);
+
     this.currentBuilderConfig_ = this.generateConfig_();
     this.selectedBuilder_.generateGraph(
         this.currentBuilderConfig_, this.app.vault, this.app.metadataCache);
-    this.selectedRenderer_.setLayout(this.selectedLayout_);
-    this.selectedLayout_.setGraphBuilder(this.selectedBuilder_);
   }
 
   /**

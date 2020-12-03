@@ -24,8 +24,6 @@ const ATTACHMENTS = 'attachments';
 const EXISTING_FILES_ONLY = 'existingFilesOnly';
 const ORPHANS = 'orphans';
 
-const MULT = 5;
-
 export class NotesGraphBuilder extends GraphBuilder {
   /**
    * Returns the display name of this graph builder.
@@ -95,6 +93,8 @@ export class NotesGraphBuilder extends GraphBuilder {
     if (!config.get(ORPHANS)) {
       this.removeOrphans_(files, metadataCache);
     }
+
+    this.trigger('structure-update', this.graph_);
   }
 
   /**
