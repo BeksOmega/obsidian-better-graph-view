@@ -158,11 +158,18 @@ export class GraphSettingsView extends ItemView {
     }
   }
 
+  /**
+   * Called when the better graph view resizes. Updates the size of pixi and the
+   * pixi viewport.
+   */
   onGraphResize() {
     const container = this.betterGraphView_.getGraphContainer();
-    this.pixi_.renderer.resize(container.offsetWidth, container.offsetHeight);
-    this.viewport_.screenWidth = container.offsetWidth;
-    this.viewport_.screenHeight = container.offsetHeight;
+    const width = container.offsetWidth;
+    const height = container.offsetHeight;
+    this.pixi_.renderer.resize(width, height);
+    this.viewport_.screenWidth = width;
+    this.viewport_.screenHeight = height;
+    this.viewport_.moveCenter(width / 2, height / 2)
   }
 
   /**

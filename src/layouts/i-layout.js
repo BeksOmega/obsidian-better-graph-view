@@ -27,9 +27,6 @@ export class Layout extends Events {
    * @param {GraphBuilder} graphBuilder The graph builder to subscribe to.
    */
   setGraphBuilder(graphBuilder) {
-    if (!graphBuilder.getGraph()) {
-      throw 'Graph builder does not have a graph set.';
-    }
     graphBuilder.on('structure-update', this.onGraphUpdate, this);
   }
 

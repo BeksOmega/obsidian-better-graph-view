@@ -46,8 +46,8 @@ export class ForceDirectedLayout extends Layout {
 
     this.simulation_
         .force('link', this.linkForce_)
-        .force('x', forceX(250).strength(.2))
-        .force('y', forceY(450).strength(.2))
+        .force('x', forceX(0).strength(.2))
+        .force('y', forceY(0).strength(.2))
         .force('repel', forceManyBody().strength(-50))
         .on('tick', this.onSimulationUpdate.bind(this));
   }
@@ -59,6 +59,7 @@ export class ForceDirectedLayout extends Layout {
    */
   onGraphUpdate(graph) {
     this.graph_ = graph;
+    // Nodes must be updated before links.
     this.simulation_.nodes(graph.getNodes());
     this.linkForce_.links(this.graph_.getEdges());
     this.simulation_.alpha(1).restart();

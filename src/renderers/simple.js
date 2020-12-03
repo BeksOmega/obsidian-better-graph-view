@@ -19,9 +19,10 @@ import * as PIXI from 'pixi.js';
 
 export class SimpleRenderer extends Renderer {
   /**
-   * Constructs the simple renderer.
-   * @param {!PIXI.Application} pixiApp The pixi application this renderer
-   *     will render to.
+   * Constructs the simple renderer. This render is meant to emulate obsidian's
+   * default renderer.
+   * @param {!PIXI.Application} pixiApp The pixi application handling our render.
+   * @param {!Viewport} viewport The viewport this renderer will render to.
    */
   constructor(pixiApp, viewport) {
     super(pixiApp, viewport);
@@ -164,8 +165,10 @@ export class SimpleRenderer extends Renderer {
    * @private
    */
   layoutEdge_(edge, container, graph) {
-    const sourceNode = edge.source;
-    const targetNode = edge.target;
+    const sourceNode = typeof edge.source == 'object' ?
+        edge.source : graph.getNode(edge.source);
+    const targetNode = typeof edge.target == 'object' ?
+        edge.target : graph.getNode(edge.target);
 
     const line = container.getChildAt(0);
     line.clear();
