@@ -12,57 +12,8 @@
 
 
 // Obsidian imports
-import {ItemView, WorkspaceLeaf, Vault} from 'obsidian';
+import {ItemView, WorkspaceLeaf} from 'obsidian';
 import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from '../constants';
-import * as PIXI from 'pixi.js';
-
-// Sigma imports
-import '../../sigma/src/sigma.core';
-import '../../sigma/src/conrad';
-import '../../sigma/src/utils/sigma.utils';
-import '../../sigma/src/utils/sigma.polyfills';
-import '../../sigma/src/sigma.settings'
-import '../../sigma/src/classes/sigma.classes.dispatcher';
-import '../../sigma/src/classes/sigma.classes.configurable';
-import '../../sigma/src/classes/sigma.classes.graph';
-import '../../sigma/src/classes/sigma.classes.camera';
-import '../../sigma/src/classes/sigma.classes.quad';
-import '../../sigma/src/classes/sigma.classes.edgequad';
-import '../../sigma/src/captors/sigma.captors.mouse';
-import '../../sigma/src/captors/sigma.captors.touch';
-import '../../sigma/src/renderers/sigma.renderers.canvas';
-import '../../sigma/src/renderers/sigma.renderers.def';
-import '../../sigma/src/renderers/canvas/sigma.canvas.labels.def';
-import '../../sigma/src/renderers/canvas/sigma.canvas.hovers.def';
-import '../../sigma/src/renderers/canvas/sigma.canvas.nodes.def';
-import '../../sigma/src/renderers/canvas/sigma.canvas.edges.def';
-import '../../sigma/src/renderers/canvas/sigma.canvas.edges.curve';
-import '../../sigma/src/renderers/canvas/sigma.canvas.edges.arrow';
-import '../../sigma/src/renderers/canvas/sigma.canvas.edges.curvedArrow';
-import '../../sigma/src/renderers/canvas/sigma.canvas.edgehovers.def';
-import '../../sigma/src/renderers/canvas/sigma.canvas.edgehovers.arrow';
-import '../../sigma/src/renderers/canvas/sigma.canvas.edgehovers.curvedArrow';
-import '../../sigma/src/renderers/canvas/sigma.canvas.extremities.def';
-import '../../sigma/src/middlewares/sigma.middlewares.rescale';
-import '../../sigma/src/middlewares/sigma.middlewares.copy';
-import '../../sigma/src/misc/sigma.misc.animation';
-import '../../sigma/src/misc/sigma.misc.bindEvents';
-import '../../sigma/src/misc/sigma.misc.bindDOMEvents';
-import '../../sigma/src/misc/sigma.misc.drawHovers';
-
-// Sigma force atlas imports.
-import '../../sigma/plugins/sigma.layout.forceAtlas2/worker';
-import '../../sigma/plugins/sigma.layout.forceAtlas2/supervisor';
-
-// Sigma drag imports.
-import '../../sigma/plugins/sigma.plugins.dragNodes/sigma.plugins.dragNodes';
-
-import {NotesGraphBuilder} from '../graph-builders/notes';
-import {ForceDirectedLayout} from '../layouts/force-directed';
-import {Graph} from '../graph/graph';
-import {SimpleRenderer} from '../renderers/simple';
-import {Node} from '../graph/node';
-import {Edge} from '../graph/edge';
 
 
 export class BetterGraphView extends ItemView {

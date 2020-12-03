@@ -73,6 +73,20 @@ export class GraphSettingsView extends ItemView {
     this.selectedBuilder_ = null;
 
     /**
+     * The currently selected Layout.
+     * @type {Layout|null}
+     * @private
+     */
+    this.selectedLayout_ = null;
+
+    /**
+     * The currently selected renderer.
+     * @type {Renderer|null}
+     * @private
+     */
+    this.selectedRenderer_ = null;
+
+    /**
      * A map of config option ids to value components which represent those
      * config options
      * @type {!Map<string, ValueComponent>}
