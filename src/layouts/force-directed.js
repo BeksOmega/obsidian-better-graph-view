@@ -61,7 +61,7 @@ export class ForceDirectedLayout extends Layout {
     this.graph_ = graph;
     this.simulation_.nodes(graph.getNodes());
     this.linkForce_.links(this.graph_.getEdges());
-    this.simulation_.restart();
+    this.simulation_.alpha(1).restart();
   }
 
   /**

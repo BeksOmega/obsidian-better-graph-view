@@ -69,6 +69,7 @@ export class SimpleRenderer extends Renderer {
       if (!nodesInGraph.has(id)) {
         this.viewport_.removeChild(container);
         container.destroy({children: true});
+        this.nodesMap_.delete(id);
       }
     }
   }
@@ -120,6 +121,7 @@ export class SimpleRenderer extends Renderer {
       if (!edgesInGraph.has(id)) {
         this.viewport_.removeChild(container);
         container.destroy({children: true});
+        this.edgesMap_.delete(id);
       }
     }
   }
