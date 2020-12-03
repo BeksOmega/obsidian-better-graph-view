@@ -10,9 +10,13 @@
  */
 'use strict';
 
-import {forceSimulation, forceCenter, forceLink, forceManyBody} from 'd3-force';
+
+import {forceSimulation, forceLink, forceManyBody, forceX, forceY} from 'd3-force';
 import {Layout} from './i-layout';
 import {Graph} from '../graph/graph';
+
+
+const START_ITERATIONS = 500;
 
 export class ForceDirectedLayout extends Layout {
   constructor() {
@@ -38,12 +42,12 @@ export class ForceDirectedLayout extends Layout {
 
     this.linkForce_
         .id(node => node.id)
-        .distance(0)
-        .strength(1);
+        .distance(0);
 
     this.simulation_
         .force('link', this.linkForce_)
-        .force('center', forceCenter(250, 450))
+        .force('x', forceX(250).strength(.2))
+        .force('y', forceY(450).strength(.2))
         .force('repel', forceManyBody().strength(-50))
         .on('tick', this.onSimulationUpdate.bind(this));
   }
