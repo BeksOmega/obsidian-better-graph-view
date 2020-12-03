@@ -301,22 +301,10 @@ export class GraphSettingsView extends ItemView {
     this.clearConfigUI_();
     this.createConfigUI_(this.selectedBuilder_);
 
-    this.sigma_.killForceAtlas2();
-
-    // TODO: Consolidate this with the above code in setGraphView.
-    this.sigma_.graph.clear();
     this.selectedBuilder_.setGraph(this.sigma_.graph);
     this.currentBuilderConfig_ = this.generateConfig_();
     this.selectedBuilder_.generateGraph(
         this.currentBuilderConfig_, this.app.vault, this.app.metadataCache);
-
-    this.forceAtlas_ = this.sigma_.startForceAtlas2({
-      worker: true,
-      barnesHutOptimize: false,
-      startingIterations: 500,
-      scalingRatio: .025,
-      slowDown: 10,
-    });
   }
 
   /**

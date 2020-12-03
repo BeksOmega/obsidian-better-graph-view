@@ -14,8 +14,8 @@
 
 import {Vault, MetadataCache, TFile, getAllTags} from 'obsidian';
 import {GraphBuilder} from './i-graphbuilder';
-import {Node} from '../../sigma/src/classes/sigma.classes.node';
-import {Edge} from '../../sigma/src/classes/sigma.classes.edge';
+import {Node} from '../graph/node';
+import {Edge} from '../graph/edge';
 import {GraphBuilderRegistry} from './graph-builders-registry';
 
 
@@ -190,8 +190,6 @@ export class NotesGraphBuilder extends GraphBuilder {
             edgeId,
             fileId,
             ref.link,
-            1,
-            '#ccc',
         ));
       })
     });
@@ -246,8 +244,6 @@ export class NotesGraphBuilder extends GraphBuilder {
             edgeId,
             fileId,
             ref.link,
-            1,
-            '#ccc',
         ));
       })
     });
@@ -307,8 +303,6 @@ export class NotesGraphBuilder extends GraphBuilder {
             edgeId,
             fileId,
             tagId,
-            1,
-            '#ccc'
         ));
       })
     })
@@ -371,8 +365,6 @@ export class NotesGraphBuilder extends GraphBuilder {
            edgeId,
            fileId,
            attachmentId,
-           1,
-           '#ccc'
         ));
       });
     })

@@ -87,7 +87,7 @@ export class SimpleRenderer extends Renderer {
       container.zIndex = 1;
       const circle = new PIXI.Graphics();
       circle.beginFill(0x666666);
-      circle.drawCircle(0, 0, 32);
+      circle.drawCircle(0, 0, 4);
       circle.endFill();
 
       this.viewport_.addChild(container);
@@ -162,12 +162,12 @@ export class SimpleRenderer extends Renderer {
    * @private
    */
   layoutEdge_(edge, container, graph) {
-    const sourceNode = graph.getNode(edge.source);
-    const targetNode = graph.getNode(edge.target);
+    const sourceNode = edge.source;
+    const targetNode = edge.target;
 
     const line = container.getChildAt(0);
     line.clear();
-    line.lineStyle(2, 0xcccccc, 1);
+    line.lineStyle(1, 0xcccccc, 1);
     line.moveTo(sourceNode.x, sourceNode.y);
     line.lineTo(targetNode.x, targetNode.y);
   }
