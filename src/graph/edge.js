@@ -11,6 +11,9 @@
 'use strict';
 
 
+import * as PIXI from 'pixi.js';
+
+
 export class Edge {
   /**
    * Constructs an edge with the given id, source id, and target id.
@@ -36,6 +39,13 @@ export class Edge {
      * @type {string|Node}
      */
     this.target = targetId;
+
+    /**
+     * The pixi container holding all of the edge's rendered elements.
+     * @type {PIXI.Container}
+     * @private
+     */
+    this.container_ = new PIXI.Container();
   }
 
   /**
@@ -53,6 +63,13 @@ export class Edge {
   }
 
   /**
+   * Returns the container which holds all of this edge's rendered elements.
+   */
+  getContainer() {
+    return this.container_;
+  }
+
+  /**
    * Returns true if this edge is connected to the given node id.
    * @param {string} nodeId The node id to check if this edge is connected to.
    */
@@ -60,4 +77,11 @@ export class Edge {
     return this.getSourceId() == nodeId || this.getTargetId() == nodeId;
   }
 
+  /**
+   * Disposes of this edge.
+   */
+  destroy() {
+    this.container_.parent && this.container_.parent.removeChild(this.container_);
+    this.container_.destroy({children: true});
+  }
 }

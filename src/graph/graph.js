@@ -47,12 +47,13 @@ export class Graph {
   }
 
   /**
-   * Removes the node with the given node id from the graph. Also removes all
-   * connected edges.
+   * Removes the node with the given node id from the graph and destorys it.
+   * Also removes all connected edges.
    * @param {string} nodeId The id of the node to remove from the graph.
    */
   removeNode(nodeId) {
     this.getConnectedEdges(nodeId).forEach(edgeId => this.removeEdge(edgeId));
+    this.getNode(nodeId).destroy();
     this.nodes_.splice(this.nodes_.findIndex(n => n.id == nodeId), 1);
   }
 
@@ -96,10 +97,11 @@ export class Graph {
   }
 
   /**
-   * Removes the edge with the given edge id from the graph.
+   * Removes the edge with the given edge id from the graph and destroys it.
    * @param {string} edgeId The id of the edge to remove from the graph.
    */
   removeEdge(edgeId) {
+    this.getEdge(edgeId).destroy();
     this.edges_.splice(this.edges_.findIndex(e => e.id == edgeId), 1);
   }
 
