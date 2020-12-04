@@ -37,4 +37,27 @@ export class Edge {
      */
     this.target = targetId;
   }
+
+  /**
+   * Returns the id of the source node for this edge.
+   */
+  getSourceId() {
+    return typeof this.source == 'string' ? this.source : this.source.id;
+  }
+
+  /**
+   * Returns the id of the target node for this edge.
+   */
+  getTargetId() {
+    return typeof this.target == 'string' ? this.target : this.target.id;
+  }
+
+  /**
+   * Returns true if this edge is connected to the given node id.
+   * @param {string} nodeId The node id to check if this edge is connected to.
+   */
+  isConnectedToNode(nodeId) {
+    return this.getSourceId() == nodeId || this.getTargetId() == nodeId;
+  }
+
 }

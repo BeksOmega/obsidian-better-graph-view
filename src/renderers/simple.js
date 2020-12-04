@@ -32,14 +32,16 @@ export class SimpleRenderer extends Renderer {
      * @type {!Map<string, PIXI.Container>}
      * @private
      */
-    this.nodesMap_ = new Map();
+    this.nodeContainersMap_ = new Map();
+
+    this.nodeDataMap_ = new Map();
 
     /**
      * Map of edge ids to containers (which render the edge).
      * @type {!Map<string, PIXI.Container>}
      * @private
      */
-    this.edgesMap_ = new Map();
+    this.edgeContainersMap_ = new Map();
   }
 
   /**
@@ -48,81 +50,95 @@ export class SimpleRenderer extends Renderer {
    * @param {!Graph} graph The graph to render.
    */
   onLayoutUpdate(graph) {
-    const nodes = graph.getNodes();
-    this.clearOldNodes_(nodes);
-    this.addNodes_(nodes);
-    this.layoutNodes_(nodes);
-
-    const edges = graph.getEdges();
-    this.clearOldEdges_(edges);
-    this.updateEdges_(edges, graph);
+    this.clearOldNodes_(graph);
+    this.addNodes_(graph);
+    this.updateNodes_(graph);
+    this.clearOldEdges_(graph);
+    this.updateEdges_(graph);
   }
 
   /**
    * Removes any rendered nodes that are not in the nodes list.
-   * @param {!Array<!Node>} nodes The current nodes in the graph.
+   * @param {!Graph} graph The current graph.
    * @private
    */
-  clearOldNodes_(nodes) {
+  clearOldNodes_(graph) {
     const nodesInGraph = new Set();
-    nodes.forEach(node => nodesInGraph.add(node.id));
-    for (const [id, container] of this.nodesMap_) {
+    graph.getNodes().forEach(node => nodesInGraph.add(node.id));
+    for (const [id, container] of this.nodeContainersMap_) {
       if (!nodesInGraph.has(id)) {
         this.viewport_.removeChild(container);
         container.destroy({children: true});
-        this.nodesMap_.delete(id);
+        this.nodeContainersMap_.delete(id);
+        this.nodeDataMap_.delete(id);
       }
     }
   }
 
   /**
    * Adds any nodes in the nodes list that are not currently rendered.
-   * @param {!Array<!Node>} nodes The current nodes in the graph.
+   * @param {!Graph} graph The current graph.
    * @private
    */
-  addNodes_(nodes) {
-    nodes.forEach((node) => {
-      if (this.nodesMap_.has(node.id)) {
+  addNodes_(graph) {
+    graph.getNodes().forEach((node) => {
+      if (this.nodeContainersMap_.has(node.id)) {
         return;
       }
       const container = new PIXI.Container();
       container.zIndex = 1;
+      const degree = graph.degree(node.id);
+      const radius = 4 * (1 + Math.log10(Math.max(degree - 5, 1)));
       const circle = new PIXI.Graphics();
       circle.beginFill(0x666666);
-      circle.drawCircle(0, 0, 4);
+      circle.drawCircle(0, 0, radius);
       circle.endFill();
 
       this.viewport_.addChild(container);
       container.addChild(circle);
-      this.nodesMap_.set(node.id, container);
+      this.nodeContainersMap_.set(node.id, container);
+      this.nodeDataMap_.set(node.id, {degree: degree});
     })
   }
 
   /**
-   * Updates the positions of all of the rendered nodes to match the postions
-   * in the graph model.
-   * @param {!Array<!Node>} nodes The current nodes in the graph.
+   * Updates the positions and colors of all of the rendered nodes to match the
+   * data in the graph model.
+   * @param {!Graph} graph The current graph.
    * @private
    */
-  layoutNodes_(nodes) {
-    nodes.forEach((node) => {
-      this.nodesMap_.get(node.id).setTransform(node.x, node.y);
+  updateNodes_(graph) {
+    graph.getNodes().forEach((node) => {
+      const container = this.nodeContainersMap_.get(node.id);
+      container.setTransform(node.x, node.y);
+
+      const degree = graph.degree(node.id);
+      const data = this.nodeDataMap_.get(node.id);
+      if (data.degree != degree) {
+        const radius = 4 * (1 + Math.log10(Math.max(degree - 5, 1)));
+        const circle = container.getChildAt(0);
+        circle.clear();
+        circle.beginFill(0x666666);
+        circle.drawCircle(0, 0, radius);
+        circle.endFill();
+        data.degree = degree;
+      }
     })
   }
 
   /**
    * Removes any rendered edges that are not in the edges list.
-   * @param {!Array<!Edge>} edges The current edges in the graph.
+   * @param {!Graph} graph The current graph.
    * @private
    */
-  clearOldEdges_(edges) {
+  clearOldEdges_(graph) {
     const edgesInGraph = new Set();
-    edges.forEach(edge => edgesInGraph.add(edge.id));
-    for (const [id, container] of this.edgesMap_) {
+    graph.getEdges().forEach(edge => edgesInGraph.add(edge.id));
+    for (const [id, container] of this.edgeContainersMap_) {
       if (!edgesInGraph.has(id)) {
         this.viewport_.removeChild(container);
         container.destroy({children: true});
-        this.edgesMap_.delete(id);
+        this.edgeContainersMap_.delete(id);
       }
     }
   }
@@ -130,16 +146,15 @@ export class SimpleRenderer extends Renderer {
   /**
    * Adds any edges in the edge list that are not currently rendered, and
    * updates all of the rendered edges to match the data in the graph model.
-   * @param {!Array<!Edge>} edges The current edges in teh graph.
    * @param {!Graph} graph The current graph.
    * @private
    */
-  updateEdges_(edges, graph) {
-    edges.forEach((edge) => {
-      if (!this.edgesMap_.has(edge.id)) {
+  updateEdges_(graph) {
+    graph.getEdges().forEach((edge) => {
+      if (!this.edgeContainersMap_.has(edge.id)) {
         this.addEdge_(edge);
       }
-      this.layoutEdge_(edge, this.edgesMap_.get(edge.id), graph);
+      this.layoutEdge_(edge, this.edgeContainersMap_.get(edge.id), graph);
     })
   }
 
@@ -153,7 +168,7 @@ export class SimpleRenderer extends Renderer {
     const line = new PIXI.Graphics();
     this.viewport_.addChild(container);
     container.addChild(line);
-    this.edgesMap_.set(edge.id, container);
+    this.edgeContainersMap_.set(edge.id, container);
   }
 
   /**
@@ -165,10 +180,8 @@ export class SimpleRenderer extends Renderer {
    * @private
    */
   layoutEdge_(edge, container, graph) {
-    const sourceNode = typeof edge.source == 'object' ?
-        edge.source : graph.getNode(edge.source);
-    const targetNode = typeof edge.target == 'object' ?
-        edge.target : graph.getNode(edge.target);
+    const sourceNode = graph.getNode(edge.getSourceId());
+    const targetNode = graph.getNode(edge.getTargetId());
 
     const line = container.getChildAt(0);
     line.clear();

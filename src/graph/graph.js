@@ -148,8 +148,18 @@ export class Graph {
    */
   getConnectedEdges(nodeId) {
     return this.edges_.filter((edge) => {
-      return edge.source.id == nodeId || edge.source == nodeId ||
-          edge.target.id == nodeId || edge.target == nodeId;
+      return edge.isConnectedToNode(nodeId);
     }).map(e => e.id);
+  }
+
+  /**
+   * Returns the number of edges that are connected to the node with the given
+   * node id.
+   * @param {string} nodeId The id of the node to find the degree of.
+   * @returns {number} The degree of the node with the given node id.
+   */
+  degree(nodeId) {
+    return this.edges_.reduce(
+        (acc, edge) => edge.isConnectedToNode(nodeId) ? ++acc : acc, 0);
   }
 }
