@@ -78,11 +78,11 @@ export class Graph {
   }
 
   /**
-   * Returns a shallow copied array of all of the nodes in the graph.
+   * Returns an array of all of the nodes in the graph.
    * @return {!Array<!Node>} All of the nodes in the graph.
    */
   getNodes() {
-    return [...this.nodes_];
+    return this.nodes_;
   }
 
   /**
@@ -126,11 +126,11 @@ export class Graph {
   }
 
   /**
-   * Returns a shallow copied array of all of the edges in the graph.
+   * Returns an array of all of the edges in the graph.
    * @return {!Array<!Edge>} All of the edges in the graph.
    */
   getEdges() {
-    return [...this.edges_];
+    return this.edges_;
   }
 
   /**

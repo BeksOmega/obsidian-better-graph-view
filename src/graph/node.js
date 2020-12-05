@@ -17,13 +17,20 @@ export class Node {
   /**
    * Constructs a node with the given id.
    * @param {string} id The id of the node. Must be unique within graph.
+   * @param {string} displayText The display text associated with this node.
    */
-  constructor(id) {
+  constructor(id, displayText) {
     /**
      * The id of the node.
      * @type {string}
      */
     this.id = id;
+
+    /**
+     * The display text of the node.
+     * @types {string}
+     */
+    this.displayText = displayText;
 
     /**
      * The x position of the node.
