@@ -178,7 +178,7 @@ export class TagsGraphBuilder extends GraphBuilder {
    * @private
    */
   removeNotes_(files, metadataCache) {
-    this.graph_.getNodes().forEach((node) => {
+    this.graph_.forEachNode((node) => {
       if (node.isNote) {
         this.graph_.removeNode(node.id);
       }

@@ -237,11 +237,11 @@ export class NotesGraphBuilder extends GraphBuilder {
    * @private
    */
   removeNonExistingFiles_(files, metadataCache) {
-    for (const node of this.graph_.getNodes()) {
+    this.graph_.forEachNode((node) => {
       if (node.isNonExisting) {
         this.graph_.removeNode(node.id);
       }
-    }
+    });
   }
 
   /**
@@ -285,11 +285,11 @@ export class NotesGraphBuilder extends GraphBuilder {
    * @private
    */
   removeTags_(files, metadataCache) {
-    for (const node of this.graph_.getNodes()) {
+    this.graph_.forEachNode((node) => {
       if (node.isTag) {
         this.graph_.removeNode(node.id);
       }
-    }
+    });
   }
 
   /**
@@ -336,11 +336,11 @@ export class NotesGraphBuilder extends GraphBuilder {
    * @private
    */
   removeAttachments_(files, metadataCache) {
-    for (const node of this.graph_.getNodes()) {
+    this.graph_.forEachNode((node) => {
       if (node.isAttachment) {
         this.graph_.removeNode(node.id);
       }
-    }
+    });
   }
 
   /**
@@ -352,7 +352,7 @@ export class NotesGraphBuilder extends GraphBuilder {
    */
   addOrphans_(files, metadataCache) {
     const existingNodeIds = new Set();
-    this.graph_.getNodes().forEach((node) => {
+    this.graph_.forEachNode((node) => {
       existingNodeIds.add(node.id);
     });
 
@@ -374,7 +374,7 @@ export class NotesGraphBuilder extends GraphBuilder {
   removeOrphans_(files, metadataCache) {
     const referencedNodeIds = new Set();
 
-    this.graph_.getEdges().forEach((edge) => {
+    this.graph_.forEachEdge((edge) => {
       referencedNodeIds.add(
           typeof edge.source == 'object' ? edge.source.id : edge.source);
       referencedNodeIds.add(
@@ -382,7 +382,7 @@ export class NotesGraphBuilder extends GraphBuilder {
 
     });
 
-    this.graph_.getNodes().forEach((node) => {
+    this.graph_.forEachNode((node) => {
       if (!referencedNodeIds.has(node.id)) {
         this.graph_.removeNode(node.id);
       }

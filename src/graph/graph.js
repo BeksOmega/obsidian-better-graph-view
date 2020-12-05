@@ -86,6 +86,18 @@ export class Graph {
   }
 
   /**
+   * Executes the provided function for each node in the graph. Loops backwards
+   * so that it is safe to remove nodes while iterating.
+   * @param {function(!Node)} callback The function to execute on each node.
+   * @param {?Object} thisArg the value to use as `this` when executing callback.
+   */
+  forEachNode(callback, thisArg) {
+    for (let i = this.nodes_.length - 1, node; (node = this.nodes_[i]); i--) {
+      callback.call(thisArg, node);
+    }
+  }
+
+  /**
    * Adds the given edge to the graph.
    * @param {!Edge} edge The edge to add to the graph.
    */
@@ -134,10 +146,28 @@ export class Graph {
   }
 
   /**
+   * Executes the provided function for each edge in the graph. Loops backwards
+   * so that it is safe to remove edges while iterating.
+   * @param {function(!Edge)} callback The function to execute on each edge.
+   * @param {?Object} thisArg the value to use as `this` when executing callback.
+   */
+  forEachEdge(callback, thisArg) {
+    for (let i = this.edges_.length - 1, edge; (edge = this.edges_[i]); i--) {
+      callback.call(thisArg, edge);
+    }
+  }
+
+  /**
    * Clears all of the nodes and edges from the graph.
    */
   clear() {
+    this.forEachNode((node) => {
+      node.destroy();
+    });
     this.nodes_.length = 0;
+    this.forEachEdge((edge) => {
+      edge.destroy();
+    });
     this.edges_.length = 0;
   }
 
