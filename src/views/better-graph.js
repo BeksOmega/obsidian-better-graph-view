@@ -13,7 +13,7 @@
 
 // Obsidian imports
 import {ItemView, WorkspaceLeaf} from 'obsidian';
-import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from '../constants';
+import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from '../utils/constants';
 
 
 export class BetterGraphView extends ItemView {

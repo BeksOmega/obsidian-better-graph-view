@@ -15,6 +15,8 @@
 import {Renderer} from './i-renderer';
 import {Graph} from '../graph/graph';
 import * as PIXI from 'pixi.js';
+import {getStyle} from '../utils/css-cache';
+import {rgbStringToHex} from "../utils/utils";
 
 
 /**
@@ -139,9 +141,16 @@ export class SimpleRenderer extends Renderer {
       if (node.data.get('degree') != degree) {
         const radius = MIN_RADIUS * (1 + Math.log10(
             Math.max(degree - IGNORED_CONNECTIONS, 1)));
+        const cssStyle = getStyle(node.getClasses());
+        const fillColor = rgbStringToHex(cssStyle.backgroundColor);
+        const borderColor = rgbStringToHex(cssStyle.borderColor);
+        const borderWidth = parseInt(cssStyle.borderWidth.substring(
+            0, cssStyle.borderWidth.length - 2));
+
         const circle = container.getChildAt(0);
         circle.clear();
-        circle.beginFill(0x666666);
+        circle.beginFill(fillColor);
+        circle.lineStyle(borderWidth, borderColor, 1, 0);
         circle.drawCircle(0, 0, radius);
         circle.endFill();
         node.data.set('degree', degree);

@@ -17,6 +17,7 @@ import {GraphBuilder} from './i-graphbuilder';
 import {Node} from '../graph/node';
 import {Edge} from '../graph/edge';
 import {GraphBuilderRegistry} from './graph-builders-registry';
+import {NoteNode} from "../graph/note-node";
 
 
 const TAGS = 'tags';
@@ -160,9 +161,12 @@ export class NotesGraphBuilder extends GraphBuilder {
 
     // Create nodes.
     files.forEach((file) => {
-      const id = metadataCache.fileToLinktext(file, file.path);
-      createdFileIds.add(id);
-      this.graph_.addNode(new Node(id, file.basename));
+      // const id = metadataCache.fileToLinktext(file, file.path);
+      // createdFileIds.add(id);
+      // this.graph_.addNode(new Node(id, file.basename));
+      const node = new NoteNode(file, metadataCache);
+      createdFileIds.add(node.id);
+      this.graph_.addNode(node);
     });
 
     // Create edges.

@@ -19,7 +19,7 @@ import {
   ValueComponent
 } from 'obsidian';
 
-import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from "../constants";
+import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from '../utils/constants';
 
 import {Graph} from '../graph/graph';
 import {GraphBuilderRegistry} from '../graph-builders/graph-builders-registry';

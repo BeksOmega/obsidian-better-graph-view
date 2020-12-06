@@ -14,7 +14,7 @@
 import {Plugin} from 'obsidian';
 import {BetterGraphView} from './views/better-graph';
 import {GraphSettingsView} from './views/graph-settings';
-import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from './constants';
+import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from './utils/constants';
 
 
 export default class BetterGraphPlugin extends Plugin {

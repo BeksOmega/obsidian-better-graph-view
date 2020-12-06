@@ -70,7 +70,7 @@ export class Node {
 
     /**
      * The pixi container holding all of the node's rendered elements.
-     * @type {PIXI.Container}
+     * @type {!PIXI.Container}
      * @private
      */
     this.container_ = new PIXI.Container();
@@ -86,9 +86,18 @@ export class Node {
 
   /**
    * Returns the container which holds all of this node's rendered elements.
+   * @return {!PIXI.Container}
    */
   getContainer() {
     return this.container_;
+  }
+
+  /**
+   * Returns the css class names associated with this node.
+   * @return {!Array<string>} The css class names associated with this node.
+   */
+  getClasses() {
+    return ['node'];
   }
 
   /**
