@@ -5,7 +5,7 @@
  */
 
 /**
- * @fileoverview File holds a bunch of little utility functions.
+ * @fileoverview File holds a bunch of color utility functions.
  * @author bekawestberg@gmail.com (Beka Westberg)
  */
 'use strict';

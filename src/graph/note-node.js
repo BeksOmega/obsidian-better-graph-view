@@ -5,16 +5,17 @@
  */
 
 /**
- * @fileoverview Class for a model of a node in a graph.
+ * @fileoverview Class for a model of a note node in a graph.
  * @author bekawestberg@gmail.com (Beka Westberg)
  */
 'use strict';
 
 
-import {Node} from "./node";
+import {Node} from './node';
 import {TFile} from 'obsidian';
 import {MetadataCache} from 'obsidian';
 import {TAGS_PREFIX, FOLDERS_PREFIX} from '../utils/constants';
+import {fileToId} from '../utils/ids';
 
 
 export class NoteNode extends Node {
@@ -24,15 +25,9 @@ export class NoteNode extends Node {
    * @param {!MetadataCache} metadataCache The metadata cache.
    */
   constructor(file, metadataCache) {
-    const id = metadataCache.fileToLinktext(file, file.path);
-    super(id, file.basename);
+    super(fileToId(file, metadataCache), file.basename);
 
-    /**
-     * Css classes associated with this note node. Includes tags and folders.
-     * @type {!Array<string>}
-     * @private
-     */
-    this.classes_ = [];
+    this.classes_.push('existing-note');
 
     const cache = metadataCache.getFileCache(file);
     if (cache.tags) {
@@ -44,13 +39,5 @@ export class NoteNode extends Node {
     for (let i = 0; i < folders.length - 1; i++) {
       this.classes_.push(FOLDERS_PREFIX + folders[i]);
     }
-  }
-
-  /**
-   * Returns the css class names associated with this node.
-   * @return {!Array<string>} The css class names associated with this node.
-   */
-  getClasses() {
-    return [...super.getClasses(), ...this.classes_];
   }
 }

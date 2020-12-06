@@ -16,7 +16,7 @@ import {Renderer} from './i-renderer';
 import {Graph} from '../graph/graph';
 import * as PIXI from 'pixi.js';
 import {getStyle} from '../utils/css-cache';
-import {rgbStringToHex} from "../utils/utils";
+import {rgbStringToHex} from '../utils/color';
 
 
 /**

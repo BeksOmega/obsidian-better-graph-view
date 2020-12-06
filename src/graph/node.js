@@ -81,6 +81,13 @@ export class Node {
      * @type {Map<string, *>}
      */
     this.data = new Map();
+
+    /**
+     * Css classes associated with this note node.
+     * @type {!Array<string>}
+     * @protected
+     */
+    this.classes_ = ['node'];
   }
 
 
@@ -97,7 +104,7 @@ export class Node {
    * @return {!Array<string>} The css class names associated with this node.
    */
   getClasses() {
-    return ['node'];
+    return this.classes_;
   }
 
   /**
