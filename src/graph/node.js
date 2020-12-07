@@ -75,6 +75,7 @@ export class Node {
      */
     this.container_ = new PIXI.Container();
     this.container_.zIndex = 1;
+    this.container_.sortableChildren = true;
 
     /**
      * A data object that can be used to store extra data about a node.
@@ -83,7 +84,7 @@ export class Node {
     this.data = new Map();
 
     /**
-     * Css classes associated with this note node.
+     * Css classes associated with this node.
      * @type {!Array<string>}
      * @protected
      */

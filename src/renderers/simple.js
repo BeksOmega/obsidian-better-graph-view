@@ -107,15 +107,7 @@ export class SimpleRenderer extends Renderer {
       if (!container.parent) {
         this.viewport_.addChild(container);
         container.addChild(new PIXI.Graphics());
-        const text = new PIXI.Text('', {
-          fontSize: TEXT_SIZE,
-          align: 'center',
-          wordWrap: true,
-          wordWrapWidth: WORD_WRAP,
-        });
-        text.anchor.set(.5, 0);
-        this.updateText_(1, text);
-        container.addChild(text);
+        container.addChild(this.makeText_());
       }
     });
     graph.getEdges().forEach((edge) => {
@@ -125,6 +117,29 @@ export class SimpleRenderer extends Renderer {
         container.addChild(new PIXI.Graphics());
       }
     });
+  }
+
+  /**
+   * Creates a PIXI.text element, initializes it and returns it.
+   * @return {!PIXI.Text} The text element that has been created.
+   * @private
+   */
+  makeText_() {
+    const cssStyle = getStyle(['node']);
+    const color = rgbStringToHex(cssStyle.color);
+
+    const text = new PIXI.Text('', {
+      fontSize: TEXT_SIZE,
+      align: 'center',
+      wordWrap: true,
+      wordWrapWidth: WORD_WRAP,
+      fill: color,
+    });
+    text.zIndex = 1;
+    text.anchor.set(.5, 0);
+    this.updateText_(1, text);
+
+    return text;
   }
 
   /**
@@ -172,9 +187,12 @@ export class SimpleRenderer extends Renderer {
       const sourceNode = graph.getNode(edge.getSourceId());
       const targetNode = graph.getNode(edge.getTargetId());
 
+      const cssStyle = getStyle(edge.getClasses());
+      const fillColor = rgbStringToHex(cssStyle.backgroundColor);
+
       const line = edge.getContainer().getChildAt(0);
       line.clear();
-      line.lineStyle(1, 0xcccccc, 1);
+      line.lineStyle(1, fillColor, 1);
       line.moveTo(sourceNode.x, sourceNode.y);
       line.lineTo(targetNode.x, targetNode.y);
     });

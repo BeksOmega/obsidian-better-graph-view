@@ -46,6 +46,14 @@ export class Edge {
      * @private
      */
     this.container_ = new PIXI.Container();
+    this.container_.sortableChildren = true;
+
+    /**
+     * Css classes associated with this edge.
+     * @type {!Array<string>}
+     * @protected
+     */
+    this.classes_ = ['edge'];
   }
 
   /**
@@ -67,6 +75,14 @@ export class Edge {
    */
   getContainer() {
     return this.container_;
+  }
+
+  /**
+   * Returns the css class names associated with this node.
+   * @return {!Array<string>} The css class names associated with this edge.
+   */
+  getClasses() {
+    return this.classes_;
   }
 
   /**
