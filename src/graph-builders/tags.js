@@ -114,7 +114,6 @@ export class TagsGraphBuilder extends GraphBuilder {
       tags.forEach((tag) => {
         const tagId = tagToId(tag);
         if (!createdTagIds.has(tagId)) {
-          console.log('adding tag', tag);
           createdTagIds.add(tagId);
           this.graph_.addNode(new TagNode(tag));
         }
