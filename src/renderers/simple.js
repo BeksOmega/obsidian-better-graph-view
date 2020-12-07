@@ -114,7 +114,7 @@ export class SimpleRenderer extends Renderer {
           wordWrapWidth: WORD_WRAP,
         });
         text.anchor.set(.5, 0);
-        this.updateText_(text);
+        this.updateText_(1, text);
         container.addChild(text);
       }
     });
@@ -157,7 +157,7 @@ export class SimpleRenderer extends Renderer {
 
         const text = container.getChildAt(1);
         text.text = node.displayText;
-        text.setTransform(0, radius);
+        text.position.set(0, radius);
       }
     });
   }
@@ -189,9 +189,9 @@ export class SimpleRenderer extends Renderer {
       return;
     }
 
-    this.graph_.getNodes().forEach((node) => {
+    this.graph_.forEachNode((node) => {
       const container = node.getContainer();
-      this.updateText_(container.getChildAt(1));
+      this.updateText_(this.oldScale_, container.getChildAt(1));
     });
     this.oldScale_ = this.viewport_.scaled;
   }
@@ -199,13 +199,12 @@ export class SimpleRenderer extends Renderer {
   /**
    * Updates the size an opacity of the given text element.
    * @param {!PIXI.Text} text The text element to update.
+   * @param {number} oldScale The old scale we are changing from.
    * @private
    */
-  updateText_(text) {
+  updateText_(oldScale, text) {
     const scale = this.viewport_.scaled;
-    const xScale = text.scale.x * this.oldScale_ / scale;
-    const yScale = text.scale.y * this.oldScale_ / scale;
-    text.setTransform(text.x, text.y, xScale, yScale);
+    text.scale.set(text.scale.x * oldScale / scale);
 
     text.alpha = Math.min(
         Math.max(scale - MIN_TEXT_SCALE, 0) /
