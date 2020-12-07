@@ -75,6 +75,13 @@ export class SimpleRenderer extends Renderer {
     this.graph_ = null;
 
     /**
+     * A map of nodes to their latest degree measurements.
+     * @type {!WeakMap<!Node, number>}
+     * @private
+     */
+    this.nodeDegrees_ = new WeakMap();
+
+    /**
      * The most recent scale value for the viewport.
      * @type {number}
      * @private
@@ -153,7 +160,7 @@ export class SimpleRenderer extends Renderer {
       container.setTransform(node.x, node.y);
 
       const degree = graph.degree(node.id);
-      if (node.data.get('degree') != degree) {
+      if (this.nodeDegrees_.get(node) != degree) {
         const radius = MIN_RADIUS * (1 + Math.log10(
             Math.max(degree - IGNORED_CONNECTIONS, 1)));
         const cssStyle = getStyle(node.getClasses());
@@ -168,7 +175,7 @@ export class SimpleRenderer extends Renderer {
         circle.lineStyle(borderWidth, borderColor, 1, 0);
         circle.drawCircle(0, 0, radius);
         circle.endFill();
-        node.data.set('degree', degree);
+        this.nodeDegrees_.set(node, degree);
 
         const text = container.getChildAt(1);
         text.text = node.displayText;

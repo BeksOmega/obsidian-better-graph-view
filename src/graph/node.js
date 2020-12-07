@@ -78,12 +78,6 @@ export class Node {
     this.container_.sortableChildren = true;
 
     /**
-     * A data object that can be used to store extra data about a node.
-     * @type {Map<string, *>}
-     */
-    this.data = new Map();
-
-    /**
      * Css classes associated with this node.
      * @type {!Array<string>}
      * @protected
