@@ -160,8 +160,8 @@ export class TagsGraphBuilder extends GraphBuilder {
 
       this.graph_.addNode(new NoteNode(file, metadataCache));
 
+      const fileId = fileToId(file, metadataCache);
       getAllTags(cache).forEach((tag) => {
-        const fileId = fileToId(file, metadataCache);
         const tagId = tagToId(tag);
         const edgeId = getEdgeId(fileId, tagId);
         if (createdEdgeIds.has(edgeId)) {

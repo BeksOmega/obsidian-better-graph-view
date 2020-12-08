@@ -10,9 +10,11 @@
  */
 'use strict';
 
+
 import {Node} from './node';
 import {FOLDERS_PREFIX} from '../utils/constants';
 import {linkCacheToId} from '../utils/ids';
+
 
 export class NonExistingNoteNode extends Node {
   /**

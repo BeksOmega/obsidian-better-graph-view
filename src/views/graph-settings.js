@@ -163,7 +163,6 @@ export class GraphSettingsView extends ItemView {
    * pixi viewport.
    */
   onGraphResize() {
-    window.viewport = this.viewport_;
     const container = this.betterGraphView_.getGraphContainer();
     const width = container.offsetWidth;
     const height = container.offsetHeight;

@@ -70,6 +70,8 @@ export class Node {
 
     /**
      * The pixi container holding all of the node's rendered elements.
+     * The node must own the container to allow for the builder and layout to
+     * bind mouse events to it.
      * @type {!PIXI.Container}
      * @private
      */

@@ -27,7 +27,7 @@ import {
   tagToId,
   attachmentToId
 } from '../utils/ids';
-import {AttachmentNode} from "../graph/attachment-node";
+import {AttachmentNode} from '../graph/attachment-node';
 
 
 const TAGS = 'tags';

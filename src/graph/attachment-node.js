@@ -5,7 +5,7 @@
  */
 
 /**
- * @fileoverview Class for a model of a note node in a graph.
+ * @fileoverview Class for a model of a attachment node in a graph.
  * @author bekawestberg@gmail.com (Beka Westberg)
  */
 'use strict';
