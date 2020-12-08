@@ -28,7 +28,7 @@ export class Renderer {
     /**
      * The pixi application that will handle rendering our graph.
      * @type {!PIXI.Application}
-     * @private
+     * @protected
      */
     this.pixi_ = pixiApp;
 
@@ -36,7 +36,7 @@ export class Renderer {
      * The viewport that all children created by the renderer should be added
      * to. This allows for scrolling and zooming.
      * @type {!Viewport}
-     * @private
+     * @protected
      */
     this.viewport_ = viewport;
   }

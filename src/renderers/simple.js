@@ -15,31 +15,80 @@
 import {Renderer} from './i-renderer';
 import {Graph} from '../graph/graph';
 import * as PIXI from 'pixi.js';
+import {getStyle} from '../utils/css-cache';
+import {rgbStringToHex} from '../utils/color';
 
+
+/**
+ * The minimum scale where we start being able to see the text.
+ * @type {number}
+ */
+const MIN_TEXT_SCALE = 1.8;
+
+/**
+ * The text scale at and beyond which text is at full opacity.
+ * @type {number}
+ */
+const MAX_TEXT_SCALE = 2.2;
+
+/**
+ * The text font size (not related to screen size).
+ * @type {number}
+ */
+const TEXT_SIZE = 14;
+
+/**
+ * The number of characters to start word wrapping at.
+ * @type {number}
+ */
+const WORD_WRAP = 200;
+
+/**
+ * The minimum radius of a node in the graph.
+ * @type {number}
+ */
+const MIN_RADIUS = 4;
+
+/**
+ * The number of connections to ignore before we start scaling the node based
+ * on the number of connections.
+ * @type {number}
+ */
+const IGNORED_CONNECTIONS = 5;
 
 export class SimpleRenderer extends Renderer {
   /**
-   * Constructs the simple renderer. This render is meant to emulate obsidian's
-   * default renderer.
-   * @param {!PIXI.Application} pixiApp The pixi application handling our render.
+   * Constructs a renderer instance given the PIXI Application instance.
+   * @param {!PIXI.Application} pixiApp The pixi application handling our
+   *     render.
    * @param {!Viewport} viewport The viewport this renderer will render to.
    */
   constructor(pixiApp, viewport) {
     super(pixiApp, viewport);
 
-    /**
-     * Map of node ids to containers (which render the nodes).
-     * @type {!Map<string, PIXI.Container>}
-     * @private
-     */
-    this.nodesMap_ = new Map();
 
     /**
-     * Map of edge ids to containers (which render the edge).
-     * @type {!Map<string, PIXI.Container>}
+     * The graph being rendered.
+     * @type {Graph|null}
      * @private
      */
-    this.edgesMap_ = new Map();
+    this.graph_ = null;
+
+    /**
+     * A map of nodes to their latest degree measurements.
+     * @type {!WeakMap<!Node, number>}
+     * @private
+     */
+    this.nodeDegrees_ = new WeakMap();
+
+    /**
+     * The most recent scale value for the viewport.
+     * @type {number}
+     * @private
+     */
+    this.oldScale_ = this.viewport_.scaled;
+
+    this.viewport_.on('zoomed', this.updateTexts_.bind(this));
   }
 
   /**
@@ -48,132 +97,142 @@ export class SimpleRenderer extends Renderer {
    * @param {!Graph} graph The graph to render.
    */
   onLayoutUpdate(graph) {
-    const nodes = graph.getNodes();
-    this.clearOldNodes_(nodes);
-    this.addNodes_(nodes);
-    this.layoutNodes_(nodes);
-
-    const edges = graph.getEdges();
-    this.clearOldEdges_(edges);
-    this.updateEdges_(edges, graph);
+    this.graph_ = graph;
+    this.attachNodesAndEdges_(graph);
+    this.updateNodes_(graph);
+    this.updateEdges_(graph);
   }
 
   /**
-   * Removes any rendered nodes that are not in the nodes list.
-   * @param {!Array<!Node>} nodes The current nodes in the graph.
-   * @private
-   */
-  clearOldNodes_(nodes) {
-    const nodesInGraph = new Set();
-    nodes.forEach(node => nodesInGraph.add(node.id));
-    for (const [id, container] of this.nodesMap_) {
-      if (!nodesInGraph.has(id)) {
-        this.viewport_.removeChild(container);
-        container.destroy({children: true});
-        this.nodesMap_.delete(id);
-      }
-    }
-  }
-
-  /**
-   * Adds any nodes in the nodes list that are not currently rendered.
-   * @param {!Array<!Node>} nodes The current nodes in the graph.
-   * @private
-   */
-  addNodes_(nodes) {
-    nodes.forEach((node) => {
-      if (this.nodesMap_.has(node.id)) {
-        return;
-      }
-      const container = new PIXI.Container();
-      container.zIndex = 1;
-      const circle = new PIXI.Graphics();
-      circle.beginFill(0x666666);
-      circle.drawCircle(0, 0, 4);
-      circle.endFill();
-
-      this.viewport_.addChild(container);
-      container.addChild(circle);
-      this.nodesMap_.set(node.id, container);
-    })
-  }
-
-  /**
-   * Updates the positions of all of the rendered nodes to match the postions
-   * in the graph model.
-   * @param {!Array<!Node>} nodes The current nodes in the graph.
-   * @private
-   */
-  layoutNodes_(nodes) {
-    nodes.forEach((node) => {
-      this.nodesMap_.get(node.id).setTransform(node.x, node.y);
-    })
-  }
-
-  /**
-   * Removes any rendered edges that are not in the edges list.
-   * @param {!Array<!Edge>} edges The current edges in the graph.
-   * @private
-   */
-  clearOldEdges_(edges) {
-    const edgesInGraph = new Set();
-    edges.forEach(edge => edgesInGraph.add(edge.id));
-    for (const [id, container] of this.edgesMap_) {
-      if (!edgesInGraph.has(id)) {
-        this.viewport_.removeChild(container);
-        container.destroy({children: true});
-        this.edgesMap_.delete(id);
-      }
-    }
-  }
-
-  /**
-   * Adds any edges in the edge list that are not currently rendered, and
-   * updates all of the rendered edges to match the data in the graph model.
-   * @param {!Array<!Edge>} edges The current edges in teh graph.
+   * Adds any node/edge containers to the viewport that haven't been added.
    * @param {!Graph} graph The current graph.
    * @private
    */
-  updateEdges_(edges, graph) {
-    edges.forEach((edge) => {
-      if (!this.edgesMap_.has(edge.id)) {
-        this.addEdge_(edge);
+  attachNodesAndEdges_(graph) {
+    graph.getNodes().forEach((node) => {
+      const container = node.getContainer();
+      if (!container.parent) {
+        this.viewport_.addChild(container);
+        container.addChild(new PIXI.Graphics());
+        container.addChild(this.makeText_());
       }
-      this.layoutEdge_(edge, this.edgesMap_.get(edge.id), graph);
-    })
+    });
+    graph.getEdges().forEach((edge) => {
+      const container = edge.getContainer();
+      if (!container.parent) {
+        this.viewport_.addChild(container);
+        container.addChild(new PIXI.Graphics());
+      }
+    });
   }
 
   /**
-   * Creates a container and graphics element for the given edge.
-   * @param {!Edge} edge The edge to create a PIXI element for.
+   * Creates a PIXI.text element, initializes it and returns it.
+   * @return {!PIXI.Text} The text element that has been created.
    * @private
    */
-  addEdge_(edge) {
-    const container = new PIXI.Container();
-    const line = new PIXI.Graphics();
-    this.viewport_.addChild(container);
-    container.addChild(line);
-    this.edgesMap_.set(edge.id, container);
+  makeText_() {
+    const cssStyle = getStyle(['node']);
+    const color = rgbStringToHex(cssStyle.color);
+
+    const text = new PIXI.Text('', {
+      fontSize: TEXT_SIZE,
+      align: 'center',
+      wordWrap: true,
+      wordWrapWidth: WORD_WRAP,
+      fill: color,
+    });
+    text.zIndex = 1;
+    text.anchor.set(.5, 0);
+    this.updateText_(1, text);
+
+    return text;
   }
 
   /**
-   * Updates the given container to draw a line between the two nodes identified
-   * by the given edge.
-   * @param {!Edge} edge The model of the edge to layout.
-   * @param {!PIXI.Container} container The container to layout.
+   * Redraws any nodes that need to be redrawn, and updates their positions.
    * @param {!Graph} graph The current graph.
    * @private
    */
-  layoutEdge_(edge, container, graph) {
-    const sourceNode = typeof edge.source == 'object' ?
-        edge.source : graph.getNode(edge.source);
-    const targetNode = typeof edge.target == 'object' ?
-        edge.target : graph.getNode(edge.target);
+  updateNodes_(graph) {
+    graph.getNodes().forEach((node) => {
+      const container = node.getContainer();
+      container.setTransform(node.x, node.y);
 
-    const line = container.getChildAt(0);
-    line.clear();
-    line.lineStyle(1, 0xcccccc, 1);
-    line.moveTo(sourceNode.x, sourceNode.y);
-    line.lineTo(targetNode.x, targetNode.y);
+      const degree = graph.degree(node.id);
+      if (this.nodeDegrees_.get(node) != degree) {
+        const radius = MIN_RADIUS * (1 + Math.log10(
+            Math.max(degree - IGNORED_CONNECTIONS, 1)));
+        const cssStyle = getStyle(node.getClasses());
+        const fillColor = rgbStringToHex(cssStyle.backgroundColor);
+        const borderColor = rgbStringToHex(cssStyle.borderColor);
+        const borderWidth = parseInt(cssStyle.borderWidth.substring(
+            0, cssStyle.borderWidth.length - 2));
+
+        const circle = container.getChildAt(0);
+        circle.clear();
+        circle.beginFill(fillColor);
+        circle.lineStyle(borderWidth, borderColor, 1, 0);
+        circle.drawCircle(0, 0, radius);
+        circle.endFill();
+        this.nodeDegrees_.set(node, degree);
+
+        const text = container.getChildAt(1);
+        text.text = node.displayText;
+        text.position.set(0, radius);
+      }
+    });
+  }
+
+  /**
+   * Redraws edges to properly connect the updated nodes.
+   * @param {!Graph} graph The current graph.
+   * @private
+   */
+  updateEdges_(graph) {
+    graph.getEdges().forEach((edge) => {
+      const sourceNode = graph.getNode(edge.getSourceId());
+      const targetNode = graph.getNode(edge.getTargetId());
+
+      const cssStyle = getStyle(edge.getClasses());
+      const fillColor = rgbStringToHex(cssStyle.backgroundColor);
+
+      const line = edge.getContainer().getChildAt(0);
+      line.clear();
+      line.lineStyle(1, fillColor, 1);
+      line.moveTo(sourceNode.x, sourceNode.y);
+      line.lineTo(targetNode.x, targetNode.y);
+    });
+  }
+
+  /**
+   * Updates the size and opacity of all of the text elements.
+   * @private
+   */
+  updateTexts_() {
+    if (!this.graph_) {
+      return;
+    }
+
+    this.graph_.forEachNode((node) => {
+      const container = node.getContainer();
+      this.updateText_(this.oldScale_, container.getChildAt(1));
+    });
+    this.oldScale_ = this.viewport_.scaled;
+  }
+
+  /**
+   * Updates the size an opacity of the given text element.
+   * @param {!PIXI.Text} text The text element to update.
+   * @param {number} oldScale The old scale we are changing from.
+   * @private
+   */
+  updateText_(oldScale, text) {
+    const scale = this.viewport_.scaled;
+    text.scale.set(text.scale.x * oldScale / scale);
+
+    text.alpha = Math.min(
+        Math.max(scale - MIN_TEXT_SCALE, 0) /
+        (MAX_TEXT_SCALE - MIN_TEXT_SCALE), 100);
   }
 }

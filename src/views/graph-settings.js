@@ -19,7 +19,7 @@ import {
   ValueComponent
 } from 'obsidian';
 
-import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from "../constants";
+import {VIEW_TYPE_BETTER_GRAPH, VIEW_TYPE_GRAPH_SETTINGS} from '../utils/constants';
 
 import {Graph} from '../graph/graph';
 import {GraphBuilderRegistry} from '../graph-builders/graph-builders-registry';
@@ -167,9 +167,10 @@ export class GraphSettingsView extends ItemView {
     const width = container.offsetWidth;
     const height = container.offsetHeight;
     this.pixi_.renderer.resize(width, height);
-    this.viewport_.screenWidth = width;
-    this.viewport_.screenHeight = height;
-    this.viewport_.moveCenter(width / 2, height / 2)
+    const view = this.viewport_;
+    view.screenWidth = width;
+    view.screenHeight = height;
+    view.moveCenter(0, 0);
   }
 
   /**

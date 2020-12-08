@@ -1,8 +1,3 @@
-/* Sets all the text color to red! */
-body {
-    color: red;
-}
-
 #graph-container-container {
     padding: 0;
 }
@@ -12,3 +7,26 @@ body {
     width: 100%;
     height: 100%;
 }
+
+.node {
+    background-color: #888;
+    border: 0 solid #888;
+    color: black;
+}
+
+.node.non-existing-note {
+    background-color: #CFCFCF;
+}
+
+.node.tag {
+    background-color: #E0D3AF;
+}
+
+.node.attachment {
+    background-color: #83D4F4;
+}
+
+.edge {
+    background-color: #CFCFCF;
+}
+

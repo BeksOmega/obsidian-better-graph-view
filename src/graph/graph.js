@@ -47,12 +47,13 @@ export class Graph {
   }
 
   /**
-   * Removes the node with the given node id from the graph. Also removes all
-   * connected edges.
+   * Removes the node with the given node id from the graph and destorys it.
+   * Also removes all connected edges.
    * @param {string} nodeId The id of the node to remove from the graph.
    */
   removeNode(nodeId) {
     this.getConnectedEdges(nodeId).forEach(edgeId => this.removeEdge(edgeId));
+    this.getNode(nodeId).destroy();
     this.nodes_.splice(this.nodes_.findIndex(n => n.id == nodeId), 1);
   }
 
@@ -77,11 +78,23 @@ export class Graph {
   }
 
   /**
-   * Returns a shallow copied array of all of the nodes in the graph.
+   * Returns an array of all of the nodes in the graph.
    * @return {!Array<!Node>} All of the nodes in the graph.
    */
   getNodes() {
-    return [...this.nodes_];
+    return this.nodes_;
+  }
+
+  /**
+   * Executes the provided function for each node in the graph. Loops backwards
+   * so that it is safe to remove nodes while iterating.
+   * @param {function(!Node)} callback The function to execute on each node.
+   * @param {?Object} thisArg the value to use as `this` when executing callback.
+   */
+  forEachNode(callback, thisArg) {
+    for (let i = this.nodes_.length - 1, node; (node = this.nodes_[i]); i--) {
+      callback.call(thisArg, node);
+    }
   }
 
   /**
@@ -96,10 +109,11 @@ export class Graph {
   }
 
   /**
-   * Removes the edge with the given edge id from the graph.
+   * Removes the edge with the given edge id from the graph and destroys it.
    * @param {string} edgeId The id of the edge to remove from the graph.
    */
   removeEdge(edgeId) {
+    this.getEdge(edgeId).destroy();
     this.edges_.splice(this.edges_.findIndex(e => e.id == edgeId), 1);
   }
 
@@ -124,18 +138,36 @@ export class Graph {
   }
 
   /**
-   * Returns a shallow copied array of all of the edges in the graph.
+   * Returns an array of all of the edges in the graph.
    * @return {!Array<!Edge>} All of the edges in the graph.
    */
   getEdges() {
-    return [...this.edges_];
+    return this.edges_;
+  }
+
+  /**
+   * Executes the provided function for each edge in the graph. Loops backwards
+   * so that it is safe to remove edges while iterating.
+   * @param {function(!Edge)} callback The function to execute on each edge.
+   * @param {?Object} thisArg the value to use as `this` when executing callback.
+   */
+  forEachEdge(callback, thisArg) {
+    for (let i = this.edges_.length - 1, edge; (edge = this.edges_[i]); i--) {
+      callback.call(thisArg, edge);
+    }
   }
 
   /**
    * Clears all of the nodes and edges from the graph.
    */
   clear() {
+    this.forEachNode((node) => {
+      node.destroy();
+    });
     this.nodes_.length = 0;
+    this.forEachEdge((edge) => {
+      edge.destroy();
+    });
     this.edges_.length = 0;
   }
 
@@ -148,8 +180,18 @@ export class Graph {
    */
   getConnectedEdges(nodeId) {
     return this.edges_.filter((edge) => {
-      return edge.source.id == nodeId || edge.source == nodeId ||
-          edge.target.id == nodeId || edge.target == nodeId;
+      return edge.isConnectedToNode(nodeId);
     }).map(e => e.id);
+  }
+
+  /**
+   * Returns the number of edges that are connected to the node with the given
+   * node id.
+   * @param {string} nodeId The id of the node to find the degree of.
+   * @returns {number} The degree of the node with the given node id.
+   */
+  degree(nodeId) {
+    return this.edges_.reduce(
+        (acc, edge) => edge.isConnectedToNode(nodeId) ? ++acc : acc, 0);
   }
 }

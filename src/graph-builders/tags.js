@@ -11,10 +11,13 @@
 'use strict';
 
 
+import {getAllTags} from 'obsidian';
 import {GraphBuilder} from './i-graphbuilder';
-import {Node} from '../graph/node';
 import {Edge} from '../graph/edge';
 import {GraphBuilderRegistry} from './graph-builders-registry';
+import {fileToId, getEdgeId, tagToId} from '../utils/ids';
+import {TagNode} from '../graph/tag-node';
+import {NoteNode} from '../graph/note-node';
 
 
 const NOTES = 'notes';
@@ -105,33 +108,34 @@ export class TagsGraphBuilder extends GraphBuilder {
 
     files.forEach((file) => {
       const cache = metadataCache.getFileCache(file);
-      if (!cache.tags) {
-        return;
-      }
+      const tags = getAllTags(cache);
 
       // Create nodes.
-      cache.tags.forEach((tagCache) => {
-        if (!createdTagIds.has(tagCache.tag)) {
-          createdTagIds.add(tagCache.tag);
-          this.graph_.addNode(new Node(tagCache.tag, tagCache.tag));
+      tags.forEach((tag) => {
+        const tagId = tagToId(tag);
+        if (!createdTagIds.has(tagId)) {
+          createdTagIds.add(tagId);
+          this.graph_.addNode(new TagNode(tag));
         }
       });
 
       // Create edges.
-      cache.tags.forEach((tagCache1) => {
-        cache.tags.forEach((tagCache2) => {
-          if (tagCache1.tag == tagCache2.tag) {
+      tags.forEach((tag1) => {
+        tags.forEach((tag2) => {
+          if (tag1 == tag2) {
             return;
           }
-          const edgeId1 = tagCache1.tag + ' to ' + tagCache2.tag;
-          const edgeId2 = tagCache2.tag + ' to ' + tagCache1.tag;
-          if (createdEdgeIds.has(edgeId1) || createdEdgeIds.has(edgeId2)) {
+          const tag1Id = tagToId(tag1);
+          const tag2Id = tagToId(tag2);
+          const edge1Id = getEdgeId(tag1Id, tag2Id);
+          const edge2Id = getEdgeId(tag2Id, tag1Id);
+          if (createdEdgeIds.has(edge1Id) || createdEdgeIds.has(edge2Id)) {
             return;
           }
-          createdEdgeIds.add(edgeId1);
-          createdEdgeIds.add(edgeId2);
-          this.graph_.addEdge(new Edge(edgeId1, tagCache1.tag, tagCache2.tag));
-          this.graph_.addEdge(new Edge(edgeId2, tagCache2.tag, tagCache1.tag));
+          createdEdgeIds.add(edge1Id);
+          createdEdgeIds.add(edge2Id);
+          this.graph_.addEdge(new Edge(edge1Id, tag1Id, tag2Id));
+          this.graph_.addEdge(new Edge(edge2Id, tag2Id, tag1Id));
         })
       })
     });
@@ -154,18 +158,17 @@ export class TagsGraphBuilder extends GraphBuilder {
         return;
       }
 
-      const fileId = metadataCache.fileToLinktext(file, file.path);
-      const node = new Node(fileId, file.basename);
-      node.isNote = true;
-      this.graph_.addNode(node);
+      this.graph_.addNode(new NoteNode(file, metadataCache));
 
-      cache.tags.forEach((tagCache) => {
-        const edgeId = fileId + ' to ' + tagCache.tag;
+      const fileId = fileToId(file, metadataCache);
+      getAllTags(cache).forEach((tag) => {
+        const tagId = tagToId(tag);
+        const edgeId = getEdgeId(fileId, tagId);
         if (createdEdgeIds.has(edgeId)) {
           return;
         }
         createdEdgeIds.add(edgeId);
-        this.graph_.addEdge(new Edge(edgeId, fileId, tagCache.tag));
+        this.graph_.addEdge(new Edge(edgeId, fileId, tagId));
       })
     })
   }
@@ -178,8 +181,8 @@ export class TagsGraphBuilder extends GraphBuilder {
    * @private
    */
   removeNotes_(files, metadataCache) {
-    this.graph_.getNodes().forEach((node) => {
-      if (node.isNote) {
+    this.graph_.forEachNode((node) => {
+      if (node instanceof NoteNode) {
         this.graph_.removeNode(node.id);
       }
     })

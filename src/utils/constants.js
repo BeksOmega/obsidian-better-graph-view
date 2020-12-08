@@ -10,5 +10,9 @@
  */
 'use strict';
 
-export const VIEW_TYPE_BETTER_GRAPH = "beks_better_graph";
-export const VIEW_TYPE_GRAPH_SETTINGS = "beks_graph_settings";
+
+export const VIEW_TYPE_BETTER_GRAPH = 'beks_better_graph';
+export const VIEW_TYPE_GRAPH_SETTINGS = 'beks_graph_settings';
+export const TAGS_PREFIX = 't-';
+export const FOLDERS_PREFIX = 'f-';
+export const ATTACHMENTS_PREFIX = 'a-';
