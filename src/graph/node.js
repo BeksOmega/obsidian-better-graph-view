@@ -78,6 +78,7 @@ export class Node {
     this.container_ = new PIXI.Container();
     this.container_.zIndex = 1;
     this.container_.sortableChildren = true;
+    this.container_.interactive = true;
 
     /**
      * Css classes associated with this node.
