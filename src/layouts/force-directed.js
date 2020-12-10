@@ -107,6 +107,8 @@ export class ForceDirectedLayout extends Layout {
       container.on('mouseup', endDrag);
       container.on('mouseupoutside', endDrag);
 
+      // alphaTarget keeps the simulation "hot", matching the alpha keeps the
+      // sim from being jumpy, and restart restarts it.
       this.simulation_.alphaTarget(.3).alpha(.3).restart();
 
       e.stopPropagation();
@@ -149,6 +151,7 @@ export class ForceDirectedLayout extends Layout {
       map.delete('mouseup');
       map.delete('mouseupoutside');
 
+      // Resetting the alphaTarget allows the simulation to cool down & stop.
       this.simulation_.alphaTarget(0);
     }
   }

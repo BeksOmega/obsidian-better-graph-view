@@ -49,6 +49,7 @@ export class Edge {
      */
     this.container_ = new PIXI.Container();
     this.container_.sortableChildren = true;
+    this.container_.interactive = true;
 
     /**
      * Css classes associated with this edge.
