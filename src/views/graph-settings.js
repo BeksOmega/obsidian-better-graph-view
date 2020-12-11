@@ -161,8 +161,9 @@ export class GraphSettingsView extends ItemView {
   /**
    * Called when the better graph view resizes. Updates the size of pixi and the
    * pixi viewport.
+   * @private
    */
-  onGraphResize() {
+  onGraphResize_() {
     const container = this.betterGraphView_.getGraphContainer();
     const width = container.offsetWidth;
     const height = container.offsetHeight;
@@ -174,13 +175,29 @@ export class GraphSettingsView extends ItemView {
   }
 
   /**
+   * Cleanes up references to allow for garbage collection when the graph view
+   * is closed.
+   * @private
+   */
+  onGraphClose_() {
+    this.graph_.clear();
+    this.selectedRenderer_.dispose();
+    this.selectedRenderer_ = null;
+    this.selectedLayout_.dispose();
+    this.selectedLayout_ = null;
+    this.pixi_.destroy(true, true);
+    this.pixi_ = null;
+  }
+
+  /**
    * Sets the graph associated with this graph settings view.
    * @param {BetterGraphView} graphView The better graph view.
    */
   setGraphView(graphView) {
     this.betterGraphView_ = graphView;
     // TODO: Find a better fix than this hack.
-    graphView.onResize = this.onGraphResize.bind(this);
+    graphView.onResize = this.onGraphResize_.bind(this);
+    graphView.onClose = this.onGraphClose_.bind(this);
 
     const container = graphView.getGraphContainer();
     this.pixi_ = new PIXI.Application({
@@ -200,7 +217,7 @@ export class GraphSettingsView extends ItemView {
     this.viewport_
         .drag()
         .wheel({smooth: 10});
-    this.onGraphResize();
+    this.onGraphResize_();
 
     this.selectedRenderer_ = new SimpleRenderer(this.pixi_, this.viewport_);
     this.selectedLayout_ = new ForceDirectedLayout(this.viewport_);

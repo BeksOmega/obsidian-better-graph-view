@@ -171,4 +171,12 @@ export class ForceDirectedLayout extends Layout {
       this.simulation_.alphaTarget(0);
     }
   }
+
+  /**
+   * Disposes of this layout.
+   */
+  dispose() {
+    super.dispose();
+    this.simulation_.stop();
+  }
 }
