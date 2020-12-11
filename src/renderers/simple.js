@@ -106,14 +106,36 @@ export class SimpleRenderer extends Renderer {
      */
     this.nodeDegrees_ = new WeakMap();
 
+    /**
+     * A map of nodes to maps of strings to event listeners on those nodes.
+     * @type {!WeakMap<!Node, !Map<string, !Function>>}
+     * @private
+     */
     this.nodeWatchers_ = new WeakMap();
 
+    /**
+     * A set of all nodes that are currently being hovered. Should always have
+     * a length of 1, but just in case I'm using a set.
+     * @type {!WeakSet<!Node>}
+     * @private
+     */
     this.hoveredNodes_ = new WeakSet();
 
+    /**
+     * The main layer that all of the node and edge containers should live on.
+     * @type {!PIXI.Container}
+     * @private
+     */
     this.mainLayer_ = new PIXI.Container();
     this.mainLayer_.sortableChildren = true;
     this.viewport_.addChild(this.mainLayer_);
 
+    /**
+     * The highlight layer than any nodes which are currently being selected
+     * live on.
+     * @type {!PIXI.Container}
+     * @private
+     */
     this.highlightedLayer_ = new PIXI.Container();
     this.highlightedLayer_.sortableChildren = true;
     this.highlightedLayer_.zIndex = 1;
