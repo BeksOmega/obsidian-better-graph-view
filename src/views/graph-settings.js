@@ -203,7 +203,7 @@ export class GraphSettingsView extends ItemView {
     this.onGraphResize();
 
     this.selectedRenderer_ = new SimpleRenderer(this.pixi_, this.viewport_);
-    this.selectedLayout_ = new ForceDirectedLayout();
+    this.selectedLayout_ = new ForceDirectedLayout(this.viewport_);
 
     // TOOD: Unify with updateSelectedBuilder_ below.
     this.selectedBuilder_.setGraph(this.graph_);

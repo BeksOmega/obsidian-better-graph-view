@@ -23,6 +23,14 @@ import {Graph} from '../graph/graph';
  */
 export class Layout extends Events {
   /**
+   * Constructs a Layout instance given the viewport.
+   * @param {!Viewport} viewport The viewport used for subscribing to move
+   *     events.
+   */
+  constructor(viewport) {
+    super();
+  }
+  /**
    * Subscribes this layout to the given graph builder.
    * @param {GraphBuilder} graphBuilder The graph builder to subscribe to.
    */
