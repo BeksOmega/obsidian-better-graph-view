@@ -58,7 +58,7 @@ const IGNORED_CONNECTIONS = 5;
 
 export class SimpleRenderer extends Renderer {
   /**
-   * Constructs a renderer instance given the PIXI Application instance.
+   * Constructs a renderer instance given the PIXI Application and viewport.
    * @param {!PIXI.Application} pixiApp The pixi application handling our
    *     render.
    * @param {!Viewport} viewport The viewport this renderer will render to.
@@ -161,6 +161,8 @@ export class SimpleRenderer extends Renderer {
 
       const degree = graph.degree(node.id);
       if (this.nodeDegrees_.get(node) != degree) {
+        this.nodeDegrees_.set(node, degree);
+
         const radius = MIN_RADIUS * (1 + Math.log10(
             Math.max(degree - IGNORED_CONNECTIONS, 1)));
         const cssStyle = getStyle(node.getClasses());
@@ -175,7 +177,8 @@ export class SimpleRenderer extends Renderer {
         circle.lineStyle(borderWidth, borderColor, 1, 0);
         circle.drawCircle(0, 0, radius);
         circle.endFill();
-        this.nodeDegrees_.set(node, degree);
+
+        container.hitArea = new PIXI.Circle(0, 0, radius);
 
         const text = container.getChildAt(1);
         text.text = node.displayText;

@@ -19,8 +19,13 @@ import {Graph} from '../graph/graph';
 const START_ITERATIONS = 500;
 
 export class ForceDirectedLayout extends Layout {
-  constructor() {
-    super();
+  /**
+   * Constructs a ForceDirectedLayout instance given the viewport.
+   * @param {!Viewport} viewport The viewport used for subscribing to move
+   *     events.
+   */
+  constructor(viewport) {
+    super(viewport);
     /**
      * The current graph being operated on by this layout.
      * @type {Graph}
@@ -49,7 +54,14 @@ export class ForceDirectedLayout extends Layout {
 
     this.linkForce_
         .id(node => node.id)
-        .distance(0);
+        .distance(10)
+        .strength((edge) => {
+          const degree = this.graph_.degree.bind(this.graph_);
+          if (edge.source.fx != null || edge.target.fx != null) {
+            return 2 / Math.min(degree(edge.getSourceId()), degree(edge.getTargetId()));
+          }
+          return 1 / Math.min(degree(edge.getSourceId()), degree(edge.getTargetId()));
+        });
 
     this.simulation_
         .force('link', this.linkForce_)
@@ -57,6 +69,9 @@ export class ForceDirectedLayout extends Layout {
         .force('y', forceY(0).strength(.2))
         .force('repel', forceManyBody().strength(-50))
         .on('tick', this.onSimulationUpdate_.bind(this));
+
+    viewport.on('zoomed', () => this.simulation_.stop());
+    viewport.on('drag-start', () => this.simulation_.stop());
   }
 
   /**
@@ -77,6 +92,7 @@ export class ForceDirectedLayout extends Layout {
     // Nodes must be updated before links.
     this.simulation_.nodes(graph.getNodes());
     this.linkForce_.links(this.graph_.getEdges());
+    this.simulation_.tick(100);
     this.simulation_.alpha(1).restart();
   }
 
