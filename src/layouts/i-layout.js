@@ -49,6 +49,9 @@ export class Layout extends Events {
    * @param {!GraphBuilder} graphBuilder The graph builder to subscribe to.
    */
   setGraphBuilder(graphBuilder) {
+    if (this.graphBuilder_ && this.updateRef_) {
+      this.graphBuilder_.offref(this.updateRef_);
+    }
     this.graphBuilder_ = graphBuilder;
     this.updateRef_ =
         graphBuilder.on('structure-update', this.onGraphUpdate, this);

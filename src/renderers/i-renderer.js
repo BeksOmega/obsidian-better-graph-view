@@ -60,6 +60,9 @@ export class Renderer {
    * @param {!Layout} layout The layout associated with this renderer.
    */
   setLayout(layout) {
+    if (this.layout_ && this.updateRef_) {
+      this.layout_.offref(this.updateRef_);
+    }
     this.layout_ = layout;
     this.updateRef_ = layout.on('layout-update', this.onLayoutUpdate, this);
   }
