@@ -121,6 +121,8 @@ export class SimpleRenderer extends Renderer {
      */
     this.hoveredNodes_ = new WeakSet();
 
+    this.edgePositions_ = new WeakMap();
+
     /**
      * The main layer that all of the node and edge containers should live on.
      * @type {!PIXI.Container}
@@ -141,7 +143,7 @@ export class SimpleRenderer extends Renderer {
     this.highlightedLayer_.zIndex = 1;
     this.viewport_.addChild(this.highlightedLayer_);
 
-    this.viewport_.on('zoomed', this.updateTexts_.bind(this));
+    this.viewport_.on('zoomed', this.onZoom_.bind(this));
   }
 
   /**
@@ -261,17 +263,24 @@ export class SimpleRenderer extends Renderer {
 
       const line = this.getEdgeGraphic_(edge);
       line.clear();
-      line.lineStyle(1, fillColor, 1);
+      line.lineStyle(1 / this.viewport_.scaled, fillColor, 1);
       line.moveTo(sourceNode.x, sourceNode.y);
       line.lineTo(targetNode.x, targetNode.y);
+
+      this.edgePositions_.set(edge, new Map()
+          .set('sourceX', sourceNode.x)
+          .set('sourceY', sourceNode.y)
+          .set('targetX', targetNode.x)
+          .set('targetY', targetNode.y));
     });
   }
 
   /**
-   * Updates the size and opacity of all of the text elements.
+   * Updates text elements and edges so that they have constant size wrt zoom.
+   * Also modifies the text's opacity.
    * @private
    */
-  updateTexts_() {
+  onZoom_() {
     if (!this.graph_) {
       return;
     }
@@ -285,6 +294,16 @@ export class SimpleRenderer extends Renderer {
         text.alpha = this.calcCurrentAlpha_();
       }
     });
+
+    this.graph_.forEachEdge((edge) => {
+      const positions = this.edgePositions_.get(edge);
+      const line = this.getEdgeGraphic_(edge);
+      const color = line.line.color;
+      line.clear();
+      line.lineStyle(1 / this.viewport_.scaled, color, 1);
+      line.moveTo(positions.get('sourceX'), positions.get('sourceY'));
+      line.lineTo(positions.get('targetX'), positions.get('targetY'));
+    })
   }
 
   /**
