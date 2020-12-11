@@ -29,13 +29,29 @@ export class Layout extends Events {
    */
   constructor(viewport) {
     super();
+
+    /**
+     * The graph builder associated with this layout.
+     * @type {GraphBuilder|null}
+     * @private
+     */
+    this.graphBuilder_ = null;
+
+    /**
+     * The event ref associated with the grpah builder structure update event.
+     * @type {EventRef|null}
+     * @private
+     */
+    this.updateRef_ = null;
   }
   /**
    * Subscribes this layout to the given graph builder.
-   * @param {GraphBuilder} graphBuilder The graph builder to subscribe to.
+   * @param {!GraphBuilder} graphBuilder The graph builder to subscribe to.
    */
   setGraphBuilder(graphBuilder) {
-    graphBuilder.on('structure-update', this.onGraphUpdate, this);
+    this.graphBuilder_ = graphBuilder;
+    this.updateRef_ =
+        graphBuilder.on('structure-update', this.onGraphUpdate, this);
   }
 
   /**
@@ -59,5 +75,13 @@ export class Layout extends Events {
     } else {
       throw 'Unknown layout event: "' + name + '".';
     }
+  }
+
+  /**
+   * Disposes of this layout. Gets rid of any references (ie for events) that
+   * might keep this from being disposed.
+   */
+  dispose() {
+    this.graphBuilder_.offref(this.updateRef_);
   }
 }

@@ -39,14 +39,29 @@ export class Renderer {
      * @protected
      */
     this.viewport_ = viewport;
+
+    /**
+     * The layout associated with this renderer.
+     * @type {Layout|null}
+     * @private
+     */
+    this.layout_ = null;
+
+    /**
+     * The event ref associated with the layout update event.
+     * @type {EventRef|null}
+     * @private
+     */
+    this.updateRef_ = null;
   }
 
   /**
    * Subscribes this renderer to the given graph layout.
-   * @param {Layout} layout
+   * @param {!Layout} layout The layout associated with this renderer.
    */
   setLayout(layout) {
-    layout.on('layout-update', this.onLayoutUpdate, this);
+    this.layout_ = layout;
+    this.updateRef_ = layout.on('layout-update', this.onLayoutUpdate, this);
   }
 
   /**
@@ -54,4 +69,12 @@ export class Renderer {
    * @param {Graph} graph The graph that has just been updated.
    */
   onLayoutUpdate(graph) {}
+
+  /**
+   * Disposes of this renderer. Gets rid of any references (ie for events) that
+   * might keep this from being disposed.
+   */
+  dispose() {
+    this.layout_.offref(this.updateRef_);
+  }
 }
