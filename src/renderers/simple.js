@@ -97,6 +97,15 @@ export class SimpleRenderer extends Renderer {
      */
     this.oldScale_ = this.viewport_.scaled;
 
+    this.mainLayer_ = new PIXI.Container();
+    this.mainLayer_.sortableChildren = true;
+    this.viewport_.addChild(this.mainLayer_);
+
+    this.highlightedLayer_ = new PIXI.Container();
+    this.highlightedLayer_.sortableChildren = true;
+    this.highlightedLayer_.zIndex = 1;
+    this.viewport_.addChild(this.highlightedLayer_);
+
     this.viewport_.on('zoomed', this.updateTexts_.bind(this));
   }
 
@@ -121,7 +130,7 @@ export class SimpleRenderer extends Renderer {
     graph.forEachNode((node) => {
       const container = node.getContainer();
       if (!container.parent) {
-        this.viewport_.addChild(container);
+        this.mainLayer_.addChild(container);
         container.addChild(new PIXI.Graphics());
         container.addChild(this.makeText_());
       }
@@ -134,7 +143,7 @@ export class SimpleRenderer extends Renderer {
     graph.forEachEdge((edge) => {
       const container = edge.getContainer();
       if (!container.parent) {
-        this.viewport_.addChild(container);
+        this.mainLayer_.addChild(container);
         container.addChild(new PIXI.Graphics());
       }
     });
@@ -158,7 +167,7 @@ export class SimpleRenderer extends Renderer {
     });
     text.zIndex = 1;
     text.anchor.set(.5, 0);
-    text.scale.set(text.scale.x / this.viewport_.scaled);
+    text.scale.set(1 / this.viewport_.scaled);
     text.alpha = this.calcCurrentAlpha_();
 
     return text;
@@ -234,8 +243,10 @@ export class SimpleRenderer extends Renderer {
 
     this.graph_.forEachNode((node) => {
       const text = node.getContainer().getChildAt(1);
-      text.scale.set(text.scale.x * this.oldScale_ / this.viewport_.scaled);
-      if (!this.hoveredNodes_.has(node)) {
+      if (this.hoveredNodes_.has(node)) {
+        text.scale.set(1.5 / this.viewport_.scaled);
+      } else {
+        text.scale.set(1 / this.viewport_.scaled);
         text.alpha = this.calcCurrentAlpha_();
       }
     });
@@ -244,15 +255,49 @@ export class SimpleRenderer extends Renderer {
 
   calcCurrentAlpha_() {
     return Math.min(Math.max(this.viewport_.scaled - MIN_TEXT_SCALE, 0) /
-        (MAX_TEXT_SCALE - MIN_TEXT_SCALE), 100);
+        (MAX_TEXT_SCALE - MIN_TEXT_SCALE), 1);
   }
 
   createMouseOver_(node) {
     return (e) => {
-      const tween = gsap.to(node.getContainer().getChildAt(1),
-          {pixi: {alpha: 1}, duration: .1});
+      if (this.hoveredNodes_.has(node)) {
+        return;  // Already highlighted. Don't mess with it.
+      }
+      const tweens = [];
+      const edges = [];
 
-      const mouseOut = this.createMouseOut_(node, tween);
+      const scale = 1.5 / this.viewport_.scaled;
+      const nodeContainer = node.getContainer();
+      nodeContainer.setParent(this.highlightedLayer_);
+
+      const nodeGraphic = nodeContainer.getChildAt(1);
+      const animation = {
+        pixi: {alpha: 1, scaleX: scale, scaleY: scale},
+        duration: .1
+      };
+      tweens.push(gsap.to(nodeGraphic, animation));
+
+      this.graph_.getConnectedEdges(node.id).forEach((edgeId) => {
+        const edge = this.graph_.getEdge(edgeId);
+        edges.push(edge);
+
+        const edgeContainer = edge.getContainer();
+        edgeContainer.setParent(this.highlightedLayer_);
+
+        const edgeGraphic = this.getEdgeGraphic_(edge);
+        const animation = {pixi: {tint: 0x666666}, duration: .1};
+        tweens.push(gsap.to(edgeGraphic, animation));
+
+        this.graph_.getNode(edge.getSourceId()).getContainer()
+            .setParent(this.highlightedLayer_);
+        this.graph_.getNode(edge.getTargetId()).getContainer()
+            .setParent(this.highlightedLayer_);
+      });
+
+      const fadeAnimation = {pixi: {alpha: .5}, duration: .2};
+      tweens.push(gsap.to(this.mainLayer_, fadeAnimation));
+
+      const mouseOut = this.createMouseOut_(node, edges, tweens);
       this.nodeWatchers_.get(node).set('mouseout', mouseOut);
       node.getContainer().on('mouseout', mouseOut);
 
@@ -260,11 +305,38 @@ export class SimpleRenderer extends Renderer {
     }
   }
 
-  createMouseOut_(node, tween) {
+  createMouseOut_(node, edges, tweens) {
     return (e) => {
-      tween.kill();
-      gsap.to(node.getContainer().getChildAt(1),
-          {pixi: {alpha: this.calcCurrentAlpha_()}, duration: .1});
+      if (node.fx) {
+        return;  // Node is being dragged. Don't mess with it.
+      }
+      tweens.forEach(tween => tween.kill());
+
+      const scale = 1 / this.viewport_.scaled;
+      const alpha = this.calcCurrentAlpha_();
+      const nodeText = this.getNodeText_(node);
+      const animation = {
+        pixi: {alpha: alpha, scaleX: scale, scaleY: scale},
+        duration: .1
+      };
+      gsap.to(nodeText, animation);
+
+      edges.forEach((edge) => {
+        const edgeContainer = edge.getContainer();
+        edgeContainer.setParent(this.mainLayer_);
+
+        const edgeGraphic = this.getEdgeGraphic_(edge);
+        const animation = {pixi: {tint: 0xFFFFFF}, duration: .1};
+        gsap.to(edgeGraphic, animation);
+
+        this.graph_.getNode(edge.getSourceId()).getContainer()
+            .setParent(this.mainLayer_);
+        this.graph_.getNode(edge.getTargetId()).getContainer()
+            .setParent(this.mainLayer_);
+      });
+
+      const unfadeAnimation = {pixi: {alpha: 1}, duration: .2};
+      gsap.to(this.mainLayer_, unfadeAnimation);
 
       const mouseOut = this.nodeWatchers_.get(node).get('mouseout');
       node.getContainer().off('mouseout', mouseOut);
@@ -272,5 +344,12 @@ export class SimpleRenderer extends Renderer {
 
       this.hoveredNodes_.delete(node);
     }
+  }
+
+  getEdgeGraphic_(edge) {
+    return edge.getContainer().getChildAt(0);
+  }
+  getNodeText_(node) {
+    return node.getContainer().getChildAt(1);
   }
 }
