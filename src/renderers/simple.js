@@ -27,30 +27,35 @@ PixiPlugin.registerPIXI(PIXI);
 /**
  * The minimum scale where we start being able to see the text.
  * @type {number}
+ * @constant
  */
 const MIN_TEXT_SCALE = 1.8;
 
 /**
  * The text scale at and beyond which text is at full opacity.
  * @type {number}
+ * @constant
  */
 const MAX_TEXT_SCALE = 2.2;
 
 /**
  * The text font size (not related to screen size).
  * @type {number}
+ * @constant
  */
-const TEXT_SIZE = 14;
+const TEXT_SIZE = 25;
 
 /**
  * The number of characters to start word wrapping at.
  * @type {number}
+ * @constant
  */
 const WORD_WRAP = 200;
 
 /**
  * The minimum radius of a node in the graph.
  * @type {number}
+ * @constant
  */
 const MIN_RADIUS = 4;
 
@@ -58,8 +63,23 @@ const MIN_RADIUS = 4;
  * The number of connections to ignore before we start scaling the node based
  * on the number of connections.
  * @type {number}
+ * @constant
  */
 const IGNORED_CONNECTIONS = 5;
+
+/**
+ * The duration in seconds for the short part of the hover animation.
+ * @type {number}
+ * @constant
+ */
+const HOVER_SHORT_DURATION = .1;
+
+/**
+ * The duration in seconds for the long part of the hover animation.
+ * @type {number}
+ * @constant
+ */
+const HOVER_LONG_DURATION = .2;
 
 export class SimpleRenderer extends Renderer {
   /**
@@ -89,13 +109,6 @@ export class SimpleRenderer extends Renderer {
     this.nodeWatchers_ = new WeakMap();
 
     this.hoveredNodes_ = new WeakSet();
-
-    /**
-     * The most recent scale value for the viewport.
-     * @type {number}
-     * @private
-     */
-    this.oldScale_ = this.viewport_.scaled;
 
     this.mainLayer_ = new PIXI.Container();
     this.mainLayer_.sortableChildren = true;
@@ -167,7 +180,7 @@ export class SimpleRenderer extends Renderer {
     });
     text.zIndex = 1;
     text.anchor.set(.5, 0);
-    text.scale.set(1 / this.viewport_.scaled);
+    text.scale.set(this.calcNonSelectedScale_());
     text.alpha = this.calcCurrentAlpha_();
 
     return text;
@@ -195,16 +208,16 @@ export class SimpleRenderer extends Renderer {
         const borderWidth = parseInt(cssStyle.borderWidth.substring(
             0, cssStyle.borderWidth.length - 2));
 
-        const circle = container.getChildAt(0);
+        container.hitArea = new PIXI.Circle(0, 0, radius);
+
+        const circle = this.getNodeGraphic_(node);
         circle.clear();
         circle.beginFill(fillColor);
         circle.lineStyle(borderWidth, borderColor, 1, 0);
         circle.drawCircle(0, 0, radius);
         circle.endFill();
 
-        container.hitArea = new PIXI.Circle(0, 0, radius);
-
-        const text = container.getChildAt(1);
+        const text = this.getNodeText_(node);
         text.text = node.displayText;
         text.position.set(0, radius);
       }
@@ -224,7 +237,7 @@ export class SimpleRenderer extends Renderer {
       const cssStyle = getStyle(edge.getClasses());
       const fillColor = rgbStringToHex(cssStyle.backgroundColor);
 
-      const line = edge.getContainer().getChildAt(0);
+      const line = this.getEdgeGraphic_(edge);
       line.clear();
       line.lineStyle(1, fillColor, 1);
       line.moveTo(sourceNode.x, sourceNode.y);
@@ -242,60 +255,29 @@ export class SimpleRenderer extends Renderer {
     }
 
     this.graph_.forEachNode((node) => {
-      const text = node.getContainer().getChildAt(1);
+      const text = this.getNodeText_(node);
       if (this.hoveredNodes_.has(node)) {
-        text.scale.set(1.5 / this.viewport_.scaled);
+        text.scale.set(this.calcSelectedScale_());
       } else {
-        text.scale.set(1 / this.viewport_.scaled);
+        text.scale.set(this.calcNonSelectedScale_());
         text.alpha = this.calcCurrentAlpha_();
       }
     });
-    this.oldScale_ = this.viewport_.scaled;
   }
 
-  calcCurrentAlpha_() {
-    return Math.min(Math.max(this.viewport_.scaled - MIN_TEXT_SCALE, 0) /
-        (MAX_TEXT_SCALE - MIN_TEXT_SCALE), 1);
-  }
-
+  /**
+   * Creates an event listener for mouse over events on the given node.
+   * @param {!Node} node The node to create the listener for.
+   * @return {function(!PIXI.InteractionEvent)} The created event listener.
+   * @private
+   */
   createMouseOver_(node) {
     return (e) => {
       if (this.hoveredNodes_.has(node)) {
         return;  // Already highlighted. Don't mess with it.
       }
-      const tweens = [];
-      const edges = [];
 
-      const scale = 1.5 / this.viewport_.scaled;
-      const nodeContainer = node.getContainer();
-      nodeContainer.setParent(this.highlightedLayer_);
-
-      const nodeGraphic = nodeContainer.getChildAt(1);
-      const animation = {
-        pixi: {alpha: 1, scaleX: scale, scaleY: scale},
-        duration: .1
-      };
-      tweens.push(gsap.to(nodeGraphic, animation));
-
-      this.graph_.getConnectedEdges(node.id).forEach((edgeId) => {
-        const edge = this.graph_.getEdge(edgeId);
-        edges.push(edge);
-
-        const edgeContainer = edge.getContainer();
-        edgeContainer.setParent(this.highlightedLayer_);
-
-        const edgeGraphic = this.getEdgeGraphic_(edge);
-        const animation = {pixi: {tint: 0x666666}, duration: .1};
-        tweens.push(gsap.to(edgeGraphic, animation));
-
-        this.graph_.getNode(edge.getSourceId()).getContainer()
-            .setParent(this.highlightedLayer_);
-        this.graph_.getNode(edge.getTargetId()).getContainer()
-            .setParent(this.highlightedLayer_);
-      });
-
-      const fadeAnimation = {pixi: {alpha: .5}, duration: .2};
-      tweens.push(gsap.to(this.mainLayer_, fadeAnimation));
+      const {tweens, edges} = this.startMouseOverAnimation_(node);
 
       const mouseOut = this.createMouseOut_(node, edges, tweens);
       this.nodeWatchers_.get(node).set('mouseout', mouseOut);
@@ -305,6 +287,14 @@ export class SimpleRenderer extends Renderer {
     }
   }
 
+  /**
+   * Creates an event listener for mouse out events on the given node.
+   * @param {!Node} node The node to create the listener for.
+   * @param {!Array<!Edge>} edges Edges connected to the given node.
+   * @param {!Array<!Tween>} tweens All of the tweens that are currently running.
+   * @return {function(!PIXI.InteractionEvent)} The created event listener.
+   * @private
+   */
   createMouseOut_(node, edges, tweens) {
     return (e) => {
       if (node.fx) {
@@ -312,31 +302,7 @@ export class SimpleRenderer extends Renderer {
       }
       tweens.forEach(tween => tween.kill());
 
-      const scale = 1 / this.viewport_.scaled;
-      const alpha = this.calcCurrentAlpha_();
-      const nodeText = this.getNodeText_(node);
-      const animation = {
-        pixi: {alpha: alpha, scaleX: scale, scaleY: scale},
-        duration: .1
-      };
-      gsap.to(nodeText, animation);
-
-      edges.forEach((edge) => {
-        const edgeContainer = edge.getContainer();
-        edgeContainer.setParent(this.mainLayer_);
-
-        const edgeGraphic = this.getEdgeGraphic_(edge);
-        const animation = {pixi: {tint: 0xFFFFFF}, duration: .1};
-        gsap.to(edgeGraphic, animation);
-
-        this.graph_.getNode(edge.getSourceId()).getContainer()
-            .setParent(this.mainLayer_);
-        this.graph_.getNode(edge.getTargetId()).getContainer()
-            .setParent(this.mainLayer_);
-      });
-
-      const unfadeAnimation = {pixi: {alpha: 1}, duration: .2};
-      gsap.to(this.mainLayer_, unfadeAnimation);
+      this.startMouseOutAnimation_(node, edges);
 
       const mouseOut = this.nodeWatchers_.get(node).get('mouseout');
       node.getContainer().off('mouseout', mouseOut);
@@ -346,10 +312,161 @@ export class SimpleRenderer extends Renderer {
     }
   }
 
+  /**
+   * Starts all of the mouse over animations.
+   * @param {!Node} node The node being moused over.
+   * @return {{tweens: !Array<!Tween>, edges: !Array<!Edge>}}
+   * @private
+   */
+  startMouseOverAnimation_(node) {
+    const tweens = [];
+    const edges = [];
+
+    const scale = this.calcSelectedScale_();
+    const nodeContainer = node.getContainer();
+    nodeContainer.setParent(this.highlightedLayer_);
+
+    const nodeText = this.getNodeText_(node);
+    const textAnimation = {
+      pixi: {
+        alpha: 1,
+        scaleX: scale,
+        scaleY: scale
+      },
+      duration: HOVER_LONG_DURATION,
+    };
+    tweens.push(gsap.to(nodeText, textAnimation));
+
+    this.graph_.getConnectedEdges(node.id).forEach((edgeId) => {
+      const edge = this.graph_.getEdge(edgeId);
+      edges.push(edge);
+
+      const edgeContainer = edge.getContainer();
+      edgeContainer.setParent(this.highlightedLayer_);
+
+      const edgeGraphic = this.getEdgeGraphic_(edge);
+      const animation = {pixi: {tint: 0x666666}, duration: HOVER_SHORT_DURATION};
+      tweens.push(gsap.to(edgeGraphic, animation));
+
+      this.graph_.getNode(edge.getSourceId()).getContainer()
+          .setParent(this.highlightedLayer_);
+      this.graph_.getNode(edge.getTargetId()).getContainer()
+          .setParent(this.highlightedLayer_);
+    });
+
+    const fadeAnimation = {pixi: {alpha: .5}, duration: HOVER_LONG_DURATION};
+    tweens.push(gsap.to(this.mainLayer_, fadeAnimation));
+
+    return {tweens: tweens, edges: edges};
+  }
+
+  /**
+   * Starts all of the mouse out animations.
+   * @param {!Node} node the node that the mouse just left.
+   * @param {!Array<!Edge>} edges All of the edges attached to the node.
+   * @private
+   */
+  startMouseOutAnimation_(node, edges) {
+    const scale = this.calcNonSelectedScale_();
+    const alpha = this.calcCurrentAlpha_();
+    const nodeText = this.getNodeText_(node);
+    const animation = {
+      pixi: {
+        alpha: alpha,
+        scaleX: scale,
+        scaleY: scale
+      },
+      duration: HOVER_SHORT_DURATION,
+    };
+    gsap.to(nodeText, animation);
+
+    edges.forEach((edge) => {
+      const edgeGraphic = this.getEdgeGraphic_(edge);
+      const animation = {pixi: {tint: 0xFFFFFF}, duration: HOVER_SHORT_DURATION};
+      gsap.to(edgeGraphic, animation);
+    });
+
+    // Reset all of the containers' parents.
+    const onComplete = () => {
+      node.getContainer().setParent(this.mainLayer_);
+      edges.forEach((edge) => {
+        const edgeContainer = edge.getContainer();
+        edgeContainer.setParent(this.mainLayer_);
+
+        this.graph_.getNode(edge.getSourceId()).getContainer()
+            .setParent(this.mainLayer_);
+        this.graph_.getNode(edge.getTargetId()).getContainer()
+            .setParent(this.mainLayer_);
+      })
+    };
+
+    const unfadeAnimation = {
+      pixi: {alpha: 1},
+      duration: HOVER_LONG_DURATION,
+      onComplete: onComplete,
+    };
+    gsap.to(this.mainLayer_, unfadeAnimation);
+  }
+
+  /**
+   * Returns the graphic element associated with the given node.
+   * @param {!Node} node The node to get the graphic element of.
+   * @return {!PIXI.DisplayObject} the graphic element of the node.
+   * @private
+   */
+  getNodeGraphic_(node) {
+    return node.getContainer().getChildAt(0);
+  }
+
+  /**
+   * Returns the text element associated with the given node.
+   * @param {!Node} node The node to get the text element of.
+   * @return {!PIXI.DisplayObject} the text element of the node.
+   * @private
+   */
+  getNodeText_(node) {
+    return node.getContainer().getChildAt(1);
+  }
+
+  /**
+   * Returns the graphic element associated with the given edge.
+   * @param {!Edge} edge The node to get the graphic element of.
+   * @return {!PIXI.DisplayObject} the graphic element of the edge.
+   * @private
+   */
   getEdgeGraphic_(edge) {
     return edge.getContainer().getChildAt(0);
   }
-  getNodeText_(node) {
-    return node.getContainer().getChildAt(1);
+
+  /**
+   * Calculates the current alpha value that text should have based on the zoom.
+   * @return {number} The current alpha value.
+   * @private
+   */
+  calcCurrentAlpha_() {
+    return Math.min(
+        Math.max(this.viewport_.scaled - MIN_TEXT_SCALE, 0) /
+        (MAX_TEXT_SCALE - MIN_TEXT_SCALE),
+        1);
+  }
+
+  /**
+   * Calculates the current scale a piece of selected text should have based on
+   * the zoom.
+   * @return {number} The selected scale.
+   * @private
+   */
+  calcSelectedScale_() {
+    return .75 / this.viewport_.scaled;
+  }
+
+  /**
+   * Calculates the current scale a piece of unselected text should have based
+   * on the zoom.
+   * @return {number} The unselected scale.
+   * @private
+   */
+  calcNonSelectedScale_() {
+    return .5 / this.viewport_.scaled;
   }
 }
