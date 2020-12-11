@@ -14,9 +14,14 @@
 
 import {Renderer} from './i-renderer';
 import {Graph} from '../graph/graph';
-import * as PIXI from 'pixi.js';
 import {getStyle} from '../utils/css-cache';
 import {rgbStringToHex} from '../utils/color';
+import * as PIXI from 'pixi.js';
+import {gsap} from 'gsap';
+import PixiPlugin from 'gsap/PixiPlugin';
+
+gsap.registerPlugin(PixiPlugin);
+PixiPlugin.registerPIXI(PIXI);
 
 
 /**
@@ -81,6 +86,10 @@ export class SimpleRenderer extends Renderer {
      */
     this.nodeDegrees_ = new WeakMap();
 
+    this.nodeWatchers_ = new WeakMap();
+
+    this.hoveredNodes_ = new WeakSet();
+
     /**
      * The most recent scale value for the viewport.
      * @type {number}
@@ -109,15 +118,20 @@ export class SimpleRenderer extends Renderer {
    * @private
    */
   attachNodesAndEdges_(graph) {
-    graph.getNodes().forEach((node) => {
+    graph.forEachNode((node) => {
       const container = node.getContainer();
       if (!container.parent) {
         this.viewport_.addChild(container);
         container.addChild(new PIXI.Graphics());
         container.addChild(this.makeText_());
       }
+      if (!this.nodeWatchers_.has(node)) {
+        const mouseOver = this.createMouseOver_(node);
+        this.nodeWatchers_.set(node, new Map().set('mouseover', mouseOver));
+        node.getContainer().on('mouseover', mouseOver);
+      }
     });
-    graph.getEdges().forEach((edge) => {
+    graph.forEachEdge((edge) => {
       const container = edge.getContainer();
       if (!container.parent) {
         this.viewport_.addChild(container);
@@ -144,7 +158,8 @@ export class SimpleRenderer extends Renderer {
     });
     text.zIndex = 1;
     text.anchor.set(.5, 0);
-    this.updateText_(1, text);
+    text.scale.set(text.scale.x / this.viewport_.scaled);
+    text.alpha = this.calcCurrentAlpha_();
 
     return text;
   }
@@ -218,24 +233,44 @@ export class SimpleRenderer extends Renderer {
     }
 
     this.graph_.forEachNode((node) => {
-      const container = node.getContainer();
-      this.updateText_(this.oldScale_, container.getChildAt(1));
+      const text = node.getContainer().getChildAt(1);
+      text.scale.set(text.scale.x * this.oldScale_ / this.viewport_.scaled);
+      if (!this.hoveredNodes_.has(node)) {
+        text.alpha = this.calcCurrentAlpha_();
+      }
     });
     this.oldScale_ = this.viewport_.scaled;
   }
 
-  /**
-   * Updates the size an opacity of the given text element.
-   * @param {!PIXI.Text} text The text element to update.
-   * @param {number} oldScale The old scale we are changing from.
-   * @private
-   */
-  updateText_(oldScale, text) {
-    const scale = this.viewport_.scaled;
-    text.scale.set(text.scale.x * oldScale / scale);
-
-    text.alpha = Math.min(
-        Math.max(scale - MIN_TEXT_SCALE, 0) /
+  calcCurrentAlpha_() {
+    return Math.min(Math.max(this.viewport_.scaled - MIN_TEXT_SCALE, 0) /
         (MAX_TEXT_SCALE - MIN_TEXT_SCALE), 100);
+  }
+
+  createMouseOver_(node) {
+    return (e) => {
+      const tween = gsap.to(node.getContainer().getChildAt(1),
+          {pixi: {alpha: 1}, duration: .1});
+
+      const mouseOut = this.createMouseOut_(node, tween);
+      this.nodeWatchers_.get(node).set('mouseout', mouseOut);
+      node.getContainer().on('mouseout', mouseOut);
+
+      this.hoveredNodes_.add(node);
+    }
+  }
+
+  createMouseOut_(node, tween) {
+    return (e) => {
+      tween.kill();
+      gsap.to(node.getContainer().getChildAt(1),
+          {pixi: {alpha: this.calcCurrentAlpha_()}, duration: .1});
+
+      const mouseOut = this.nodeWatchers_.get(node).get('mouseout');
+      node.getContainer().off('mouseout', mouseOut);
+      this.nodeWatchers_.get(node).delete('mouseout');
+
+      this.hoveredNodes_.delete(node);
+    }
   }
 }
