@@ -263,7 +263,7 @@ export class SimpleRenderer extends Renderer {
 
       const line = this.getEdgeGraphic_(edge);
       line.clear();
-      line.lineStyle(1 / this.viewport_.scaled, fillColor, 1);
+      line.lineStyle(this.calcEdgeWidth_(), fillColor, 1);
       line.moveTo(sourceNode.x, sourceNode.y);
       line.lineTo(targetNode.x, targetNode.y);
 
@@ -300,7 +300,7 @@ export class SimpleRenderer extends Renderer {
       const line = this.getEdgeGraphic_(edge);
       const color = line.line.color;
       line.clear();
-      line.lineStyle(1 / this.viewport_.scaled, color, 1);
+      line.lineStyle(this.calcEdgeWidth_(), color, 1);
       line.moveTo(positions.get('sourceX'), positions.get('sourceY'));
       line.lineTo(positions.get('targetX'), positions.get('targetY'));
     })
@@ -509,5 +509,10 @@ export class SimpleRenderer extends Renderer {
    */
   calcNonSelectedScale_() {
     return .5 / this.viewport_.scaled;
+  }
+
+  calcEdgeWidth_() {
+    const scale = this.viewport_.scaled;
+    return Math.min(Math.max(scale, .7), 1 / scale);
   }
 }

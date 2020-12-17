@@ -11,7 +11,13 @@
 'use strict';
 
 
-import {forceSimulation, forceLink, forceManyBody, forceX, forceY} from 'd3-force';
+import {
+  forceSimulation,
+  forceLink,
+  forceManyBody,
+  forceX,
+  forceY,
+} from 'd3-force';
 import {Layout} from './i-layout';
 import {Graph} from '../graph/graph';
 
@@ -54,7 +60,7 @@ export class ForceDirectedLayout extends Layout {
 
     this.linkForce_
         .id(node => node.id)
-        .distance(10)
+        .distance(30)
         .strength((edge) => {
           const degree = this.graph_.degree.bind(this.graph_);
           if (edge.source.fx != null || edge.target.fx != null) {
@@ -65,8 +71,8 @@ export class ForceDirectedLayout extends Layout {
 
     this.simulation_
         .force('link', this.linkForce_)
-        .force('x', forceX(0).strength(.2))
-        .force('y', forceY(0).strength(.2))
+        .force('x', forceX(0).strength(.1))
+        .force('y', forceY(0).strength(.1))
         .force('repel', forceManyBody().strength(-50))
         .on('tick', this.onSimulationUpdate_.bind(this));
 
