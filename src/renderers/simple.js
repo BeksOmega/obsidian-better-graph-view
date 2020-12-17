@@ -525,6 +525,11 @@ export class SimpleRenderer extends Renderer {
     return .5 / this.viewport_.scaled;
   }
 
+  /**
+   * Calculates the current width the edges should have based on the zoom.
+   * @returns {number} The edge width
+   * @private
+   */
   calcEdgeWidth_() {
     const scale = this.viewport_.scaled;
     return Math.min(Math.max(scale, .7), 1 / scale);
