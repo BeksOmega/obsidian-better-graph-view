@@ -129,9 +129,12 @@ export class ForceDirectedLayout extends Layout {
       container.on('mouseup', endDrag);
       container.on('mouseupoutside', endDrag);
 
+      node.fx = node.x;
+      node.fy = node.y;
+
       // alphaTarget keeps the simulation "hot", matching the alpha keeps the
       // sim from being jumpy, and restart restarts it.
-      this.simulation_.alphaTarget(.3).alpha(.3).restart();
+      this.simulation_.alphaTarget(.8).alpha(.8).restart();
 
       e.stopPropagation();
     }

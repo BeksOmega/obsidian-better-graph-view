@@ -114,13 +114,18 @@ export class SimpleRenderer extends Renderer {
     this.nodeWatchers_ = new WeakMap();
 
     /**
-     * A set of all nodes that are currently being hovered. Should always have
-     * a length of 1, but just in case I'm using a set.
-     * @type {!WeakSet<!Node>}
+     * The node that is currently being hovered.
+     * @type {Node|null}
      * @private
      */
-    this.hoveredNodes_ = new WeakSet();
+    this.hoveredNode_ = null;
 
+    /**
+     * Weakmap of edges to the positions of their source and target points.
+     * Used for resizing the edges when zooming.
+     * @type {!WeakMap<!Edge, !Map<string, number>>}
+     * @private
+     */
     this.edgePositions_ = new WeakMap();
 
     /**
@@ -172,9 +177,11 @@ export class SimpleRenderer extends Renderer {
         container.addChild(this.makeText_());
       }
       if (!this.nodeWatchers_.has(node)) {
-        const mouseOver = this.createMouseOver_(node);
-        this.nodeWatchers_.set(node, new Map().set('mouseover', mouseOver));
-        node.getContainer().on('mouseover', mouseOver);
+        const hoverStart = this.createHoverStart_(node);
+        this.nodeWatchers_.set(node, new Map().set('mouseover', hoverStart));
+        this.nodeWatchers_.set(node, new Map().set('mousedown', hoverStart));
+        node.getContainer().on('mouseover', hoverStart);
+        node.getContainer().on('mousedown', hoverStart);
       }
     });
     graph.forEachEdge((edge) => {
@@ -287,7 +294,7 @@ export class SimpleRenderer extends Renderer {
 
     this.graph_.forEachNode((node) => {
       const text = this.getNodeText_(node);
-      if (this.hoveredNodes_.has(node)) {
+      if (this.hoveredNode_ == node) {
         text.scale.set(this.calcSelectedScale_());
       } else {
         text.scale.set(this.calcNonSelectedScale_());
@@ -312,19 +319,22 @@ export class SimpleRenderer extends Renderer {
    * @return {function(!PIXI.InteractionEvent)} The created event listener.
    * @private
    */
-  createMouseOver_(node) {
+  createHoverStart_(node) {
     return (e) => {
-      if (this.hoveredNodes_.has(node)) {
+      if (this.hoveredNode_) {
         return;  // Already highlighted. Don't mess with it.
       }
 
       const {tweens, edges} = this.startMouseOverAnimation_(node);
 
-      const mouseOut = this.createMouseOut_(node, edges, tweens);
+      const mouseOut = this.createHoverEnd_(node, edges, tweens, true);
+      const mouseUp = this.createHoverEnd_(node, edges, tweens, false);
       this.nodeWatchers_.get(node).set('mouseout', mouseOut);
+      this.nodeWatchers_.get(node).set('mouseupoutside', mouseUp);
       node.getContainer().on('mouseout', mouseOut);
+      node.getContainer().on('mouseupoutside', mouseUp);
 
-      this.hoveredNodes_.add(node);
+      this.hoveredNode_ = node;
     }
   }
 
@@ -333,23 +343,27 @@ export class SimpleRenderer extends Renderer {
    * @param {!Node} node The node to create the listener for.
    * @param {!Array<!Edge>} edges Edges connected to the given node.
    * @param {!Array<!Tween>} tweens All of the tweens that are currently running.
+   * @param {boolean} keepHover True if we should keep hovering while nodes are
+   *     being dragged. False otherwise.
    * @return {function(!PIXI.InteractionEvent)} The created event listener.
    * @private
    */
-  createMouseOut_(node, edges, tweens) {
+  createHoverEnd_(node, edges, tweens, keepHover) {
     return (e) => {
-      if (node.fx) {
+      if (keepHover && (node.fx || node.fy)) {
         return;  // Node is being dragged. Don't mess with it.
       }
       tweens.forEach(tween => tween.kill());
 
       this.startMouseOutAnimation_(node, edges);
 
-      const mouseOut = this.nodeWatchers_.get(node).get('mouseout');
-      node.getContainer().off('mouseout', mouseOut);
+      const hoverEnd = this.nodeWatchers_.get(node).get('mouseout');
+      node.getContainer().off('mouseout', hoverEnd);
+      node.getContainer().off('mouseupoutside', hoverEnd);
       this.nodeWatchers_.get(node).delete('mouseout');
+      this.nodeWatchers_.get(node).delete('mouseupoutside');
 
-      this.hoveredNodes_.delete(node);
+      this.hoveredNode_ = null;
     }
   }
 
@@ -429,7 +443,6 @@ export class SimpleRenderer extends Renderer {
 
     // Reset all of the containers' parents.
     const onComplete = () => {
-      node.getContainer().setParent(this.mainLayer_);
       edges.forEach((edge) => {
         const edgeContainer = edge.getContainer();
         edgeContainer.setParent(this.mainLayer_);
@@ -438,7 +451,8 @@ export class SimpleRenderer extends Renderer {
             .setParent(this.mainLayer_);
         this.graph_.getNode(edge.getTargetId()).getContainer()
             .setParent(this.mainLayer_);
-      })
+      });
+      node.getContainer().setParent(this.mainLayer_);
     };
 
     const unfadeAnimation = {
