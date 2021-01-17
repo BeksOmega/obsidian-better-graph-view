@@ -71,8 +71,8 @@ export class ForceDirectedLayout extends Layout {
 
     this.simulation_
         .force('link', this.linkForce_)
-        .force('x', forceX(0).strength(.1))
-        .force('y', forceY(0).strength(.1))
+        .force('x', forceX(0).strength(.05))
+        .force('y', forceY(0).strength(.06))
         .force('repel', forceManyBody().strength(-50))
         .on('tick', this.onSimulationUpdate_.bind(this));
 
