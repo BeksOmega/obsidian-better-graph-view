@@ -28,11 +28,32 @@ export class Graph {
     this.nodes_ = [];
 
     /**
+     * A map of the node IDs to nodes.
+     * @type {!Map<string, !Node>}
+     * @private
+     */
+    this.nodesMap_ = new Map();
+
+    /**
      * An array of all of the edges in the graph.
      * @type {!Array<!Edge>}
      * @private
      */
     this.edges_ = [];
+
+    /**
+     * A map of the edge IDs to edges.
+     * @type {!Map<string, !Edge>}
+     * @private
+     */
+    this.edgesMap_ = new Map();
+
+    /**
+     * A map of node ids to the degrees of those nodes.
+     * @type {!Map<string, number>}
+     * @private
+     */
+    this.degreeCache_ = new Map();
   }
 
   /**
@@ -44,6 +65,7 @@ export class Graph {
       throw 'The graph already contains a node with the id "' + node.id + '".';
     }
     this.nodes_.push(node);
+    this.nodesMap_.set(node.id, node);
   }
 
   /**
@@ -53,8 +75,12 @@ export class Graph {
    */
   removeNode(nodeId) {
     this.getConnectedEdges(nodeId).forEach(edgeId => this.removeEdge(edgeId));
-    this.getNode(nodeId).destroy();
+
+    this.nodesMap_.delete(nodeId);
+    this.degreeCache_.delete(nodeId);
     this.nodes_.splice(this.nodes_.findIndex(n => n.id == nodeId), 1);
+
+    this.getNode(nodeId).destroy();
   }
 
   /**
@@ -64,7 +90,7 @@ export class Graph {
    *     false otherwise.
    */
   hasNode(nodeId) {
-    return this.nodes_.some(node => node.id == nodeId)
+    return this.nodesMap_.has(nodeId);
   }
 
   /**
@@ -74,7 +100,7 @@ export class Graph {
    *     not exist.
    */
   getNode(nodeId) {
-    return this.nodes_.find(node => node.id == nodeId);
+    return this.nodesMap_.get(nodeId);
   }
 
   /**
@@ -106,6 +132,9 @@ export class Graph {
       throw 'The graph already contains an edge with the id "' + edge.id + '".';
     }
     this.edges_.push(edge);
+    this.edgesMap_.set(edge.id, edge);
+    this.degreeCache_.delete(edge.getSourceId());
+    this.degreeCache_.delete(edge.getTargetId());
   }
 
   /**
@@ -113,8 +142,9 @@ export class Graph {
    * @param {string} edgeId The id of the edge to remove from the graph.
    */
   removeEdge(edgeId) {
-    this.getEdge(edgeId).destroy();
+    this.edgesMap_.delete(edgeId);
     this.edges_.splice(this.edges_.findIndex(e => e.id == edgeId), 1);
+    this.getEdge(edgeId).destroy();
   }
 
   /**
@@ -124,7 +154,7 @@ export class Graph {
    *     false otherwise.
    */
   hasEdge(edgeId) {
-    return this.edges_.some(edge => edge.id == edgeId)
+    return this.edgesMap_.has(edgeId);
   }
 
   /**
@@ -134,7 +164,7 @@ export class Graph {
    *     not exist.
    */
   getEdge(edgeId) {
-    return this.edges_.find(edge => edge.id == edgeId);
+    return this.edgesMap_.get(nodeId);
   }
 
   /**
@@ -165,10 +195,14 @@ export class Graph {
       node.destroy();
     });
     this.nodes_.length = 0;
+    this.nodesMap_.clear();
+    this.degreeCache_.clear();
+
     this.forEachEdge((edge) => {
       edge.destroy();
     });
     this.edges_.length = 0;
+    this.edgesMap_.clear();
   }
 
   /**
@@ -191,7 +225,13 @@ export class Graph {
    * @returns {number} The degree of the node with the given node id.
    */
   degree(nodeId) {
-    return this.edges_.reduce(
-        (acc, edge) => edge.isConnectedToNode(nodeId) ? ++acc : acc, 0);
+    if (this.degreeCache_.has(nodeId)) {
+      return this.degreeCache_.get(nodeId);
+    } else {
+      const degree = this.edges_.reduce(
+          (acc, edge) => edge.isConnectedToNode(nodeId) ? ++acc : acc, 0);
+      this.degreeCache_.set(nodeId, degree);
+      return degree;
+    }
   }
 }

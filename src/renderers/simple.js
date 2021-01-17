@@ -223,7 +223,7 @@ export class SimpleRenderer extends Renderer {
    * @private
    */
   updateNodes_(graph) {
-    graph.getNodes().forEach((node) => {
+    graph.forEachNode((node) => {
       const container = node.getContainer();
       container.setTransform(node.x, node.y);
 
