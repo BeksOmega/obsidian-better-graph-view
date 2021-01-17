@@ -98,9 +98,7 @@ export class ForceDirectedLayout extends Layout {
     // Nodes must be updated before links.
     this.simulation_.nodes(graph.getNodes());
     this.linkForce_.links(this.graph_.getEdges());
-    // this.simulation_.tick(1);
-    // this.onSimulationUpdate_();
-    // this.simulation_.tick(100);
+    this.simulation_.tick(100);
     this.simulation_.alpha(1).restart();
   }
 

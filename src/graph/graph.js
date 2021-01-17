@@ -164,7 +164,7 @@ export class Graph {
    *     not exist.
    */
   getEdge(edgeId) {
-    return this.edgesMap_.get(nodeId);
+    return this.edgesMap_.get(edgeId);
   }
 
   /**
