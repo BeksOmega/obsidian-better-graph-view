@@ -178,8 +178,9 @@ export class SimpleRenderer extends Renderer {
       }
       if (!this.nodeWatchers_.has(node)) {
         const hoverStart = this.createHoverStart_(node);
-        this.nodeWatchers_.set(node, new Map().set('mouseover', hoverStart));
-        this.nodeWatchers_.set(node, new Map().set('mousedown', hoverStart));
+        this.nodeWatchers_.set(node, new Map()
+            .set('mouseover', hoverStart)
+            .set('mousedown', hoverStart));
         node.getContainer().on('mouseover', hoverStart);
         node.getContainer().on('mousedown', hoverStart);
       }
@@ -223,7 +224,7 @@ export class SimpleRenderer extends Renderer {
    * @private
    */
   updateNodes_(graph) {
-    graph.getNodes().forEach((node) => {
+    graph.forEachNode((node) => {
       const container = node.getContainer();
       container.setTransform(node.x, node.y);
 
@@ -261,7 +262,7 @@ export class SimpleRenderer extends Renderer {
    * @private
    */
   updateEdges_(graph) {
-    graph.getEdges().forEach((edge) => {
+    graph.forEachEdge((edge) => {
       const sourceNode = graph.getNode(edge.getSourceId());
       const targetNode = graph.getNode(edge.getTargetId());
 

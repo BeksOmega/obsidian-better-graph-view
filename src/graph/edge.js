@@ -64,7 +64,7 @@ export class Edge {
    * @return {string} The id of the source node.
    */
   getSourceId() {
-    return typeof this.source == 'string' ? this.source : this.source.id;
+    return this.source.id || this.source;
   }
 
   /**
@@ -72,7 +72,7 @@ export class Edge {
    * @return {string} The id of the target node.
    */
   getTargetId() {
-    return typeof this.target == 'string' ? this.target : this.target.id;
+    return this.target.id || this.target;
   }
 
   /**
