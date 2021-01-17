@@ -28,7 +28,7 @@ import {NotesGraphBuilder} from '../graph-builders/notes';
 import {TagsGraphBuilder} from '../graph-builders/tags';
 
 import {Layout} from '../layouts/i-layout';
-import {ForceDirectedLayout} from '../layouts/force-directed';
+import {ForceDirectedLayout} from '../layouts/force-directed/force-directed';
 
 import {Renderer} from '../renderers/i-renderer';
 import {SimpleRenderer} from '../renderers/simple';

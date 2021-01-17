@@ -11,18 +11,10 @@
 'use strict';
 
 
-import {
-  forceSimulation,
-  forceLink,
-  forceManyBody,
-  forceX,
-  forceY,
-} from 'd3-force';
-import {Layout} from './i-layout';
-import {Graph} from '../graph/graph';
+import {Layout} from '../i-layout';
+import {Graph} from '../../graph/graph';
+import WebWorker from 'web-worker:./worker';
 
-
-const START_ITERATIONS = 500;
 
 export class ForceDirectedLayout extends Layout {
   /**
@@ -46,38 +38,24 @@ export class ForceDirectedLayout extends Layout {
      */
     this.nodeWatchers_ = new WeakMap();
 
-    /**
-     * The force simulation associated with this layout.
-     * @type {!Object}
-     */
-    this.simulation_ = forceSimulation();
+    this.worker_ = new WebWorker();
+    this.worker_.onmessage = function(event) {
+      for (const nodeData of event.data.nodes) {
+        const node = this.graph_.getNode(nodeData.id);
+        node.id = nodeData.id;
+        node.x = nodeData.x;
+        node.y = nodeData.y;
+        node.vx = nodeData.vx;
+        node.vy = nodeData.vy;
+        node.fx = nodeData.fx;
+        node.fy = nodeData.fy;
+      }
+      this.onSimulationUpdate_();
+    }.bind(this);
 
-    /**
-     * The link force associated with this layout.
-     * @type {force}
-     */
-    this.linkForce_ = forceLink();
-
-    this.linkForce_
-        .id(node => node.id)
-        .distance(30)
-        .strength((edge) => {
-          const degree = this.graph_.degree.bind(this.graph_);
-          if (edge.source.fx != null || edge.target.fx != null) {
-            return 2 / Math.min(degree(edge.getSourceId()), degree(edge.getTargetId()));
-          }
-          return 1 / Math.min(degree(edge.getSourceId()), degree(edge.getTargetId()));
-        });
-
-    this.simulation_
-        .force('link', this.linkForce_)
-        .force('x', forceX(0).strength(.05))
-        .force('y', forceY(0).strength(.06))
-        .force('repel', forceManyBody().strength(-50))
-        .on('tick', this.onSimulationUpdate_.bind(this));
-
-    viewport.on('zoomed', () => this.simulation_.stop());
-    viewport.on('drag-start', () => this.simulation_.stop());
+    // TODO:
+    //viewport.on('zoomed', () => this.simulation_.stop());
+    //viewport.on('drag-start', () => this.simulation_.stop());
   }
 
   /**
@@ -95,11 +73,32 @@ export class ForceDirectedLayout extends Layout {
       }
     });
 
-    // Nodes must be updated before links.
-    this.simulation_.nodes(graph.getNodes());
-    this.linkForce_.links(this.graph_.getEdges());
-    this.simulation_.tick(100);
-    this.simulation_.alpha(1).restart();
+    const nodes = [];
+    graph.forEachNode((node) => {
+      nodes.push({
+        id: node.id,
+        x: node.x,
+        y: node.y,
+        vx: node.vx,
+        vy: node.vy,
+        fx: node.fx,
+        fy: node.fy,
+      })
+    });
+    const links = [];
+    graph.forEachEdge((edge) => {
+      links.push({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+      })
+    });
+
+    this.worker_.postMessage({
+      type: 'reset',
+      nodes: nodes,
+      links: links,
+    })
   }
 
   /**
@@ -129,12 +128,22 @@ export class ForceDirectedLayout extends Layout {
       container.on('mouseup', endDrag);
       container.on('mouseupoutside', endDrag);
 
-      node.fx = node.x;
-      node.fy = node.y;
+      console.log('down');
+      this.worker_.postMessage({
+        type: 'fixed',
+        node: {
+          id: node.id,
+          fx: node.x,
+          fy: node.y,
+        }
+      });
+      // TODO:
+      //node.fx = node.x;
+      //node.fy = node.y;
 
       // alphaTarget keeps the simulation "hot", matching the alpha keeps the
       // sim from being jumpy, and restart restarts it.
-      this.simulation_.alphaTarget(.8).alpha(.8).restart();
+      //this.simulation_.alphaTarget(.8).alpha(.8).restart();
 
       e.stopPropagation();
     }
@@ -150,8 +159,9 @@ export class ForceDirectedLayout extends Layout {
     return (e) => {
       const parent = node.getContainer().parent;
       const point = parent.toLocal(e.data.global);
-      node.fx = point.x;
-      node.fy = point.y;
+      // TODO:
+      //node.fx = point.x;
+      //node.fy = point.y;
     }
   }
 
@@ -176,8 +186,9 @@ export class ForceDirectedLayout extends Layout {
       map.delete('mouseup');
       map.delete('mouseupoutside');
 
+      // TODO:
       // Resetting the alphaTarget allows the simulation to cool down & stop.
-      this.simulation_.alphaTarget(0);
+      //this.simulation_.alphaTarget(0);
     }
   }
 
@@ -186,6 +197,7 @@ export class ForceDirectedLayout extends Layout {
    */
   dispose() {
     super.dispose();
-    this.simulation_.stop();
+    // TODO:
+    //this.simulation_.stop();
   }
 }

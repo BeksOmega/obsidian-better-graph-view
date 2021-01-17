@@ -1,5 +1,6 @@
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import webWorkerLoader from 'rollup-plugin-web-worker-loader';
 
 export default {
   input: 'src/app.js',
@@ -13,6 +14,11 @@ export default {
   plugins: [
     nodeResolve({browser: true}),
     commonjs(),
+    webWorkerLoader({
+      targetPlatform: 'browser',
+      preserveSource: true,
+      sourcemap: true,
+    })
   ],
   context: 'window'
 };
