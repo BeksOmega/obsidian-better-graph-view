@@ -27,17 +27,51 @@ export class NoteNode extends Node {
   constructor(file, metadataCache) {
     super(fileToId(file, metadataCache), file.basename);
 
+    this.name_ = file.name;
+
+    this.path_ = file.path;
+
+    this.tags_ = [];
+
     this.classes_.push('existing-note');
 
     const cache = metadataCache.getFileCache(file);
     if (cache.tags) {
-      cache.tags.forEach(tagCache =>
-          this.classes_.push(TAGS_PREFIX + tagCache.tag.substring(1)));
+      cache.tags.forEach(tagCache => {
+        // Cut off octothorpe.
+        const tag = tagCache.tag.substring(1);
+        this.tags_.push(tag);
+        this.classes_.push(TAGS_PREFIX + tag);
+      });
     }
 
     const folders = file.path.split('/');
     for (let i = 0; i < folders.length - 1; i++) {
       this.classes_.push(FOLDERS_PREFIX + folders[i]);
     }
+  }
+
+  /**
+   * Returns the title of this note.
+   * @return {string} The title of this note.
+   */
+  getTitle() {
+    return this.name_;
+  }
+
+  /**
+   * Returns the folder path of this note.
+   * @return {string} The folder path of this note.
+   */
+  getFolderPath() {
+    return this.path_;
+  }
+
+  /**
+   * Returns an array of the tags of this note.
+   * @return {!Array<!String>} An array of the tags of this note.
+   */
+  getTags() {
+    return this.tags_;
   }
 }
