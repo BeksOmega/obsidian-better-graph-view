@@ -5,29 +5,29 @@
  */
 
 /**
- * @fileoverview A query that returns all nodes with a matching title.
+ * @fileoverview A query that returns all nodes that have the given tag.
  * @author bekawestberg@gmail.com (Beka Westberg)
  */
 'use strict';
 
 
-import {QueryableNoteNode} from '../queryable-nodes/queryable-note-node';
 import {Query} from '../queries/i-query';
+import {QueryableNoteNode} from "../queryable-nodes/queryable-note-node";
 
-export class WithTitle extends Query {
+export class WithTag extends Query {
   /**
-   * Constructs a WithTitle query.
-   * @param {?string} title The string the note's title must contain.
+   * Constructs a WithTag query.
+   * @param {?string} tag The tag the note must contain.
    */
-  constructor(title) {
+  constructor(tag) {
     super();
 
     /**
-     * The string the note's title must contain.
+     * The tag the note must contain.
      * @type {string}
      * @private
      */
-    this.title_ = title || '';
+    this.tag_ = tag || '';
   }
 
   /**
@@ -39,8 +39,9 @@ export class WithTitle extends Query {
   run(universe) {
     const set = new Set();
     universe.forEach((node) => {
+      // TODO: Add support for tag nodes.
       if (node instanceof QueryableNoteNode) {
-        if (node.getTitle().contains(this.title_)) {
+        if (node.getTags().some((tag) => tag == this.tag_)) {
           set.add(node);
         }
       } else {  // Let all other types of nodes pass.
@@ -55,6 +56,6 @@ export class WithTitle extends Query {
    * @param {!Query} query The query to compare against.
    */
   equals(query) {
-    return query instanceof WithTitle && query.title_ == this.title_;
+    return query instanceof WithTag && query.tag_ == this.tag_;
   }
 }

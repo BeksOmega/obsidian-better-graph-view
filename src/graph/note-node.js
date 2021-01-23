@@ -64,7 +64,8 @@ export class NoteNode extends Node {
    * @return {string} The folder path of this note.
    */
   getFolderPath() {
-    return this.path_;
+    const match = this.path_.match(/(.+)\//);
+    return match ? match[1] : '';
   }
 
   /**

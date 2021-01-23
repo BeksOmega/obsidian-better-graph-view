@@ -5,7 +5,7 @@
  */
 
 /**
- * @fileoverview A query that returns all nodes with a matching title.
+ * @fileoverview A query that returns all nodes within a given folder
  * @author bekawestberg@gmail.com (Beka Westberg)
  */
 'use strict';
@@ -14,12 +14,12 @@
 import {QueryableNoteNode} from '../queryable-nodes/queryable-note-node';
 import {Query} from '../queries/i-query';
 
-export class WithTitle extends Query {
+export class InFolder extends Query {
   /**
-   * Constructs a WithTitle query.
-   * @param {?string} title The string the note's title must contain.
+   * Constructs a InFolder query.
+   * @param {?string} title The folder the note must be in.
    */
-  constructor(title) {
+  constructor(folder) {
     super();
 
     /**
@@ -27,7 +27,7 @@ export class WithTitle extends Query {
      * @type {string}
      * @private
      */
-    this.title_ = title || '';
+    this.folder_ = folder || '';
   }
 
   /**
@@ -40,7 +40,7 @@ export class WithTitle extends Query {
     const set = new Set();
     universe.forEach((node) => {
       if (node instanceof QueryableNoteNode) {
-        if (node.getTitle().contains(this.title_)) {
+        if (node.getFolderPath().contains(this.folder_)) {
           set.add(node);
         }
       } else {  // Let all other types of nodes pass.
@@ -55,6 +55,6 @@ export class WithTitle extends Query {
    * @param {!Query} query The query to compare against.
    */
   equals(query) {
-    return query instanceof WithTitle && query.title_ == this.title_;
+    return query instanceof InFolder && query.folder_ == this.folder_;
   }
 }

@@ -14,6 +14,8 @@
 
 import {Query} from './queries/i-query';
 import {WithTitle} from './queries/with-title';
+import {WithTag} from './queries/with-tag';
+import {InFolder} from "./queries/in-folder";
 
 
 /**
@@ -22,7 +24,9 @@ import {WithTitle} from './queries/with-title';
  * @type {!Map<string, Query>}
  */
 const QUERY_MAP = new Map()
-    .set('withtitle', WithTitle);
+    .set('withtitle', WithTitle)
+    .set('withtag', WithTag)
+    .set('infolder', InFolder);
 
 export function createQuery(str) {
   return parseQuery_(str);
