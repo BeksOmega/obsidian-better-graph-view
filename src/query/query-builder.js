@@ -18,76 +18,71 @@ import {WithTitle} from './queries/with-title';
 
 /**
  * Maps query key strings to query constructors.
- * String keys cannot contain: '(', ')', ' ', '-'
+ * String keys cannot contain: '(', ')', ' ', '-', '_', '"'
  * @type {!Map<string, Query>}
  */
 const QUERY_MAP = new Map()
     .set('withtitle', WithTitle);
 
-export class QueryBuilder {
-  /**
-   * Creates a query that can be run, given the string representation of the
-   * query.
-   * @param {!Set<!QueryableNode>} universe The universe of QueryableNodes (akin
-   *     to set theory).
-   * @param {string} str The string to parse into a query.
-   * @return {!Query} The created query.
-   */
-  createQuery(universe, str) {
-    return this.parseQuery_(universe, str);
-  }
+export function createQuery(str) {
+  return parseQuery_(str);
+}
 
-  parseQuery_(universe, str) {
-    for (var i = 0; i < str.length; i++) {
-      if (str[i] != '(') {
-        continue;
-      }
-      const queryName = str.substring(0, i);
-      const queryParams = str.substring(i + 1);
-      const queryConstructor = this.getQueryByName_(queryName);
-      return queryConstructor(universe, ...this.parseParams_(queryParams));
+function parseQuery_(str) {
+  for (var i = 0; i < str.length; i++) {
+    if (str[i] != '(') {
+      continue;
     }
-    return undefined;
+    const queryName = str.substring(0, i);
+    const queryParams = str.substring(i + 1);
+    const queryConstructor = getQueryByName_(queryName);
+    if (queryConstructor) {
+      return new queryConstructor(...parseParams_(queryParams));
+    }
   }
+  return undefined;
+}
 
-  parseParams_(universe, str) {
-    const params = [];
-    let startIndex = 0;
-    let openParensCount = 0;
-    for (let i = 0; i < str.length; i++) {
-      switch (str[i]) {
-        case '(':
-          openParensCount++;
-          break;
-        case ')':
-          openParensCount--;
-          if (!openParensCount) {
-            const query = this.parseQuery_(
-                universe, str.substring(startIndex, i + 1));
-            if (query) {  // TODO: Maybe log if it's not valid?
-              params.push(query);
-            }
-            startIndex = i + 1;
+function parseParams_(str) {
+  const params = [];
+  let startIndex = 0;
+  let openParensCount = 0;
+  for (let i = 0; i < str.length; i++) {
+    switch (str[i]) {
+      case '(':
+        openParensCount++;
+        break;
+      case ')':
+        openParensCount--;
+        if (!openParensCount) {
+          const query = parseQuery_(str.substring(startIndex, i + 1));
+          if (query) {  // TODO: Maybe log if it's not valid?
+            params.push(query);
           }
-          break;
-        case '"':
-          const literal = str.substring(i).match(/"(.*)"/)[1];
+          startIndex = i + 1;
+        }
+        break;
+      case '"':
+        // TODO: Handle this elsewhere.
+        const tokens = str.substring(i).match(/"(.*)"/);
+        if (tokens) {
+          const literal = tokens[1];
           params.push(literal);
           startIndex = i + literal.length + 2;
           i = literal.length + 1;  // Only add 1 b/c ++
-          break;
-      }
+        }
+        break;
     }
-    const lastQuery = this.parseQuery_(universe, str.substring(startIndex));
-    if (lastQuery) {
-      params.push(lastQuery);
-    }
-    return params;
   }
+  const lastQuery = parseQuery_(str.substring(startIndex));
+  if (lastQuery) {
+    params.push(lastQuery);
+  }
+  return params;
+}
 
-  getQueryByName_(name) {
-    // Replace whitespace and dashes, and go to lower case.
-    return QUERY_MAP.get(name.replace(/[\s\-]/g, '').toLowerCase());
-  }
+function getQueryByName_(name) {
+  // Replace whitespace, dashes, and underscores and go to lower case.
+  return QUERY_MAP.get(name.replace(/[\s\-_]/g, '').toLowerCase());
 }
 

@@ -29,6 +29,14 @@ export class QueryableNoteNode extends QueryableNode{
   }
 
   /**
+   * Returns the NoteNode contained in this node.
+   * @return {!NoteNode} The NoteNode contained in this node.
+   */
+  getNode() {
+    return this.node_;
+  }
+
+  /**
    * Returns the id of this node.
    * @return {string} The id of this node.
    */
@@ -104,7 +112,7 @@ export class QueryableNoteNode extends QueryableNode{
    * @return {string} The folder path of this note node.
    */
   getFolderPath() {
-    return this.node_.getTitle();
+    return this.node_.getFolderPath();
   }
 
   /**

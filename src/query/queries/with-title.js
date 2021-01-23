@@ -12,27 +12,28 @@
 
 
 import {QueryableNoteNode} from '../queryable-nodes/queryable-note-node';
+import {Query} from '../queries/i-query';
 
-export class WithTitle extends Query{
+export class WithTitle extends Query {
   /**
    * Constructs a WithTitle query given the universe of QueryableNodes.
-   * @param {!Set<!QueryableNode>} universe The universe of QueryableNodes (akin
-   *     to set theory).
    * @param {string} title The title the note's title must contain.
    */
-  constructor(universe, title) {
-    super(universe, undefined);
+  constructor(title) {
+    super();
 
-    this.title_ = title;
+    this.title_ = title || '';
   }
 
   /**
    * Runs the query.
+   * @param {!Set<!QueryableNode>} universe The universe of QueryableNodes (akin
+   *     to set theory).
    * @return {!Set<!QueryableNode>}
    */
-  run() {
+  run(universe) {
     const set = new Set();
-    this.universe_.forEach((node) => {
+    universe.forEach((node) => {
       if (node instanceof QueryableNoteNode &&
           node.getTitle().contains(this.title_)) {
         set.add(node);
@@ -40,4 +41,12 @@ export class WithTitle extends Query{
     });
     return set;
   };
+
+  /**
+   * Returns true if the two queries are equal, false otherwise.
+   * @param {!Query} query The query to compare against.
+   */
+  equals(query) {
+    return query instanceof WithTitle && query.title_ == this.title_;
+  }
 }

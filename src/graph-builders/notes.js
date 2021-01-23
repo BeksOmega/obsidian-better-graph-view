@@ -28,12 +28,14 @@ import {
   attachmentToId
 } from '../utils/ids';
 import {AttachmentNode} from '../graph/attachment-node';
+import {QueryableNoteNode} from '../query/queryable-nodes/queryable-note-node';
 
 
 const TAGS = 'tags';
 const ATTACHMENTS = 'attachments';
 const EXISTING_FILES_ONLY = 'existingFilesOnly';
 const ORPHANS = 'orphans';
+const QUERY = 'query';
 
 export class NotesGraphBuilder extends GraphBuilder {
   /**
@@ -50,6 +52,11 @@ export class NotesGraphBuilder extends GraphBuilder {
    */
   getConfig() {
     return [
+      {
+        type: 'query',
+        id: QUERY,
+        displayText: 'Query',
+      },
       {
         type: 'toggle',
         id: TAGS,
@@ -123,12 +130,15 @@ export class NotesGraphBuilder extends GraphBuilder {
       return;
     }
 
+    let triggerUpdate = oldConfig.get(ORPHANS) != newConfig.get(ORPHANS);
 
+    this.addExistingFiles_(files, metadataCache);
     // We should add orphans just in case the other config options need them
     // available.
     this.addOrphans_(files, metadataCache);
 
     if (oldConfig.get(TAGS) != newConfig.get(TAGS)) {
+      triggerUpdate = true;
       if (newConfig.get(TAGS)) {
         this.addTags_(files, metadataCache);
       } else {
@@ -136,6 +146,7 @@ export class NotesGraphBuilder extends GraphBuilder {
       }
     }
     if (oldConfig.get(ATTACHMENTS) != newConfig.get(ATTACHMENTS)) {
+      triggerUpdate = true;
       if (newConfig.get(ATTACHMENTS)) {
         this.addAttachments_(files, metadataCache);
       } else {
@@ -143,11 +154,19 @@ export class NotesGraphBuilder extends GraphBuilder {
       }
     }
     if (oldConfig.get(EXISTING_FILES_ONLY) != newConfig.get(EXISTING_FILES_ONLY)) {
+      triggerUpdate = true;
       if (newConfig.get(EXISTING_FILES_ONLY)) {
         this.removeNonExistingFiles_(files, metadataCache);
       } else {
         this.addNonExistingFiles_(files, metadataCache);
       }
+    }
+    if (oldConfig.get(QUERY) &&
+        !oldConfig.get(QUERY).equals(newConfig.get(QUERY))) {
+      triggerUpdate = true;
+    }
+    if (newConfig.get(QUERY)) {
+      this.filterForQuery_(newConfig.get(QUERY));
     }
 
     // And remove any orphans once again (if orphans are disabled).
@@ -155,7 +174,9 @@ export class NotesGraphBuilder extends GraphBuilder {
       this.removeOrphans_(files, metadataCache)
     }
 
-    this.trigger('structure-update', this.graph_);
+    if (triggerUpdate) {
+      this.trigger('structure-update', this.graph_);
+    }
   }
 
   /**
@@ -166,13 +187,16 @@ export class NotesGraphBuilder extends GraphBuilder {
    * @private
    */
   addExistingFiles_(files, metadataCache) {
-    const createdFileIds = new Set();
-    const createdEdgeIds = new Set();
+    const createdFileIds = new Set(this.graph_.getNodes().map(node => node.id));
+    const createdEdgeIds = new Set(this.graph_.getEdges().map(edge => edge.id));
 
     // Create nodes.
     files.forEach((file) => {
-      createdFileIds.add(fileToId(file, metadataCache));
-      this.graph_.addNode(new NoteNode(file, metadataCache));
+      const id = fileToId(file, metadataCache);
+      if (!createdFileIds.has(id)) {
+        createdFileIds.add(id);
+        this.graph_.addNode(new NoteNode(file, metadataCache));
+      }
     });
 
     // Create edges.
@@ -207,7 +231,7 @@ export class NotesGraphBuilder extends GraphBuilder {
   addNonExistingFiles_(files, metadataCache) {
     const existingFileIds = new Set();
     const createdNonExistingIds = new Set();
-    const createdEdgeIds = new Set();
+    const createdEdgeIds = new Set(this.graph_.getEdges().map(edge => edge.id));
 
     files.forEach((file) => {
       existingFileIds.add(metadataCache.fileToLinktext(file, file.path));
@@ -347,6 +371,31 @@ export class NotesGraphBuilder extends GraphBuilder {
         this.graph_.removeNode(node.id);
       }
     });
+  }
+
+  /**
+   * Removes any nodes from the graph that do not fulfill the query. This should
+   * be run after other config options (eg existing files only).
+   * @param {!Query} query The query used to filter the graph.
+   * @private
+   */
+  filterForQuery_(query) {
+    const nodes = new Set();
+    this.graph_.getNodes().forEach((node) => {
+      if (node instanceof NoteNode) {
+        nodes.add(new QueryableNoteNode(this.graph_, node));
+      }
+    });
+    const newNodes = new Set();
+    query.run(nodes).forEach((node) => {
+      newNodes.add(node.getNode());
+    });
+    console.log('before', nodes, 'after', newNodes);
+    this.graph_.forEachNode((node) => {
+      if (node instanceof  NoteNode && !newNodes.has(node)) {
+        this.graph_.removeNode(node.id);
+      }
+    })
   }
 
   /**

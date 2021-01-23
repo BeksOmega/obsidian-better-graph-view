@@ -14,20 +14,22 @@
 export class Query {
   /**
    * Constructs a query given the universe of QueryableNodes.
-   * @param {!Set<!QueryableNode>} universe The universe of QueryableNodes (akin
-   *     to set theory).
-   * @param {...(!Query|*)} params The other params for this query.
    */
-  constructor(universe, ...params) {
-    this.universe_ = universe;
-    this.params_ = params;
-  }
+  constructor() {}
 
   /**
    * Runs the query.
+   * @param {!Set<!QueryableNode>} universe The universe of QueryableNodes (akin
+   *     to set theory).
    * @return {!Set<!QueryableNode>}
    */
-  run() {
+  run(universe) {
     return new Set();
   };
+
+  /**
+   * Returns true if the two queries are equal, false otherwise.
+   * @param {!Query} query The query to compare against.
+   */
+  equals(query) { }
 }

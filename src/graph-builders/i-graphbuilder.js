@@ -22,6 +22,17 @@ import {Graph} from '../graph/graph';
  * @interface
  */
 export class GraphBuilder extends Events {
+  constructor() {
+    super();
+
+    /**
+     * The graph being modified by this graph builder.
+     * @type {Graph}
+     * @private
+     */
+    this.graph_ = null;
+  }
+
   /**
    * Returns the display name of this graph builder.
    * @return {string} The display name of this graph builder.

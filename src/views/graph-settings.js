@@ -15,6 +15,7 @@ import {
   DropdownComponent,
   ItemView, Setting,
   SliderComponent,
+  TextAreaComponent,
   ToggleComponent,
   ValueComponent
 } from 'obsidian';
@@ -34,6 +35,8 @@ import {Renderer} from '../renderers/i-renderer';
 import {SimpleRenderer} from '../renderers/simple';
 import * as PIXI from 'pixi.js';
 import {Viewport} from 'pixi-viewport';
+
+import {createQuery} from '../query/query-builder';
 
 
 export class GraphSettingsView extends ItemView {
@@ -252,6 +255,9 @@ export class GraphSettingsView extends ItemView {
         case 'dropdown':
           this.createConfigDropdown_(setting, opt);
           break;
+        case 'query':
+          this.createConfigQuery_(setting, opt);
+          break;
         default:
           throw 'Unknown config option type: ' + opt.type;
       }
@@ -321,6 +327,17 @@ export class GraphSettingsView extends ItemView {
   }
 
   /**
+   * Creates a query UI representing a config option.
+   * @param {!Setting} setting The setting to add the toggle to.
+   * @param {Object} option The option parameters.
+   * @private
+   */
+  createConfigQuery_(setting, option) {
+    const text = new TextAreaComponent(setting.controlEl);
+    this.subscribeToComponentChanges_(option.id, text);
+  }
+
+  /**
    * Adds the value component to the map of settings, and adds a change listener
    * to the value component.
    * @param {string} id The id of the component.
@@ -375,7 +392,12 @@ export class GraphSettingsView extends ItemView {
   generateConfig_() {
     const config = new Map();
     for (const [id, configComponent] of this.configComponents_) {
-      config.set(id,configComponent.getValue());
+      if (configComponent instanceof TextAreaComponent) {
+        const val = configComponent.getValue();
+        config.set(id, val ? createQuery(val) : undefined);
+      } else {
+        config.set(id, configComponent.getValue());
+      }
     }
     return config;
   }
