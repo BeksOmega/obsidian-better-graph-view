@@ -23,7 +23,7 @@ export class InFolder extends Query {
     super();
 
     /**
-     * The string the note's title must contain.
+     * The folder the note must be in.
      * @type {string}
      * @private
      */
