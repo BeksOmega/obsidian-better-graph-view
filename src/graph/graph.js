@@ -35,13 +35,6 @@ export class Graph {
     this.nodesMap_ = new Map();
 
     /**
-     * An array of all of the edges in the graph.
-     * @type {!Array<!Edge>}
-     * @private
-     */
-    this.edges_ = [];
-
-    /**
      * A map of the edge IDs to edges.
      * @type {!Map<string, !Edge>}
      * @private
@@ -138,7 +131,6 @@ export class Graph {
     if (this.hasEdge(edge.id)) {
       throw 'The graph already contains an edge with the id "' + edge.id + '".';
     }
-    this.edges_.push(edge);
     this.edgesMap_.set(edge.id, edge);
     this.degreeCache_.delete(edge.getSourceId());
     this.degreeCache_.delete(edge.getTargetId());
@@ -159,7 +151,6 @@ export class Graph {
    * @param {string} edgeId The id of the edge to remove from the graph.
    */
   removeEdge(edgeId) {
-    this.edges_.splice(this.edges_.findIndex(e => e.id == edgeId), 1);
     this.getEdge(edgeId).destroy();
     this.edgesMap_.delete(edgeId);
   }
@@ -189,7 +180,7 @@ export class Graph {
    * @return {!Array<!Edge>} All of the edges in the graph.
    */
   getEdges() {
-    return this.edges_;
+    return [...this.edgesMap_.values()];
   }
 
   /**
@@ -199,7 +190,8 @@ export class Graph {
    * @param {?Object} thisArg the value to use as `this` when executing callback.
    */
   forEachEdge(callback, thisArg) {
-    for (let i = this.edges_.length - 1, edge; (edge = this.edges_[i]); i--) {
+    const edges = this.getEdges();
+    for (let i = edges.length - 1, edge; (edge = edges[i]); i--) {
       callback.call(thisArg, edge);
     }
   }
@@ -218,7 +210,6 @@ export class Graph {
     this.forEachEdge((edge) => {
       edge.destroy();
     });
-    this.edges_.length = 0;
     this.edgesMap_.clear();
   }
 
@@ -230,10 +221,6 @@ export class Graph {
    *     given node id as the source or target id.
    */
   getConnectedEdges(nodeId) {
-    // return this.edges_.filter((edge) => {
-    //   return edge.isConnectedToNode(nodeId);
-    // }).map(e => e.id);
-
     const edges = this.connectedEdges_.get(nodeId);
     if (!edges) {
       return [];
@@ -253,7 +240,7 @@ export class Graph {
     if (this.degreeCache_.has(nodeId)) {
       return this.degreeCache_.get(nodeId);
     } else {
-      const degree = this.edges_.reduce(
+      const degree = this.getEdges().reduce(
           (acc, edge) => edge.isConnectedToNode(nodeId) ? ++acc : acc, 0);
       this.degreeCache_.set(nodeId, degree);
       return degree;
