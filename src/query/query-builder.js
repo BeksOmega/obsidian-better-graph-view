@@ -72,6 +72,8 @@ function parseParams_(str) {
     if (returnVal) {
       params.push(returnVal.val);
       i += returnVal.length;
+    } else {
+      i++;
     }
   }
 

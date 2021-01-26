@@ -91,7 +91,8 @@ export class QueryableNoteNode extends QueryableNode{
         .map((edgeId) => {
           const edge = this.graph_.getEdge(edgeId);
           if (edge.getSourceId() == this.node_.id) {
-            return this.graph_.getNode(edge.getTargetId());
+            return new QueryableNoteNode(
+                this.graph_, this.graph_.getNode(edge.getTargetId()));
           } else {
             return new QueryableNoteNode(
                 this.graph_, this.graph_.getNode(edge.getSourceId()));

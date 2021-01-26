@@ -50,27 +50,39 @@ export class WithinDegree extends Query {
       return universe;
     }
     const queryNodes = this.query_.run(universe);
-    const set = new Set();
+    const queryNodeIds = new Set();
+    queryNodes.forEach((node) => {
+      queryNodeIds.add(node.getId());
+    });
+    const filteredNodes = new Set();
+    const filteredNodeIds = new Set();
+
 
     // Add first degree nodes.
-    universe.forEach((node) => {
-      if (!queryNodes.has(node) &&
-          this.some_(queryNodes, (qNode) => qNode.hasConnectionWith(node))) {
-        set.add(node);
-      }
+    queryNodes.forEach((node) => {
+      node.getConnectedNodes().forEach((cNode) => {
+        if (!queryNodeIds.has(cNode.getId())) {
+          filteredNodes.add(cNode);
+          filteredNodeIds.add(cNode.getId());
+        }
+      });
     });
 
     // Add other degree nodes.
     for (let i = 1; i < this.degree_; i++) {
-      universe.forEach((node) => {
-        if (!queryNodes.has(node) && !set.has(node) &&
-            this.some_(set, (sNode) => sNode.hasConnectionWith(node))) {
-          set.add(node);
-        }
+      const nodes = new Set(filteredNodes);
+      nodes.forEach((node) => {
+        node.getConnectedNodes().forEach((cNode) => {
+          const id = cNode.getId();
+          if (!queryNodeIds.has(id) && !filteredNodeIds.has(id)) {
+            filteredNodes.add(cNode);
+            filteredNodeIds.add(id);
+          }
+        })
       });
     }
 
-    return set;
+    return filteredNodes;
   };
 
   /**
@@ -92,11 +104,10 @@ export class WithinDegree extends Query {
    *     set.
    */
   some_(set, fn) {
-    for (let elem of set) {
-      if (fn(elem)) {
-        return true;
-      }
-    }
-    return false;
+    let returnVal = false;
+    set.forEach((elem) => {
+      returnVal = returnVal || fn(elem);
+    });
+    return returnVal;
   }
 }
