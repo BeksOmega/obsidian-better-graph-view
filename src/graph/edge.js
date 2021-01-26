@@ -22,6 +22,11 @@ export class Edge {
    * @param {string} targetId The id of the target node.
    */
   constructor(id, sourceId, targetId) {
+    if (sourceId == targetId) {
+      throw 'Source and target IDs must be different. Source: ' + sourceId +
+          ' Target: ' + targetId;
+    }
+
     /**
      * The id of the edge.
      * @type {string}
@@ -47,9 +52,7 @@ export class Edge {
      * @type {PIXI.Container}
      * @private
      */
-    this.container_ = new PIXI.Container();
-    this.container_.sortableChildren = true;
-    this.container_.interactive = true;
+    this.container_ = null;
 
     /**
      * Css classes associated with this edge.
@@ -81,6 +84,11 @@ export class Edge {
    *     elements
    */
   getContainer() {
+    if (!this.container_) {
+      this.container_ = new PIXI.Container();
+      this.container_.sortableChildren = true;
+      this.container_.interactive = true;
+    }
     return this.container_;
   }
 

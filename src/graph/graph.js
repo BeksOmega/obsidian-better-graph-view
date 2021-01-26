@@ -54,6 +54,13 @@ export class Graph {
      * @private
      */
     this.degreeCache_ = new Map();
+
+    /**
+     * A map from nodes to the edges connected to those nodes.
+     * @type {!Map<!string, !Array<!Edge>>}
+     * @private
+     */
+    this.connectedEdges_ = new Map();
   }
 
   /**
@@ -80,7 +87,7 @@ export class Graph {
     this.getNode(nodeId).destroy();
     this.nodesMap_.delete(nodeId);
     this.degreeCache_.delete(nodeId);
-
+    this.connectedEdges_.delete(nodeId);
   }
 
   /**
@@ -135,6 +142,16 @@ export class Graph {
     this.edgesMap_.set(edge.id, edge);
     this.degreeCache_.delete(edge.getSourceId());
     this.degreeCache_.delete(edge.getTargetId());
+    this.addEdgeConnection_(edge, edge.getSourceId());
+    this.addEdgeConnection_(edge, edge.getTargetId());
+  }
+
+  addEdgeConnection_(edge, nodeId) {
+    if (this.connectedEdges_.get(nodeId)) {
+      this.connectedEdges_.get(nodeId).push(edge);
+    } else {
+      this.connectedEdges_.set(nodeId, [edge]);
+    }
   }
 
   /**
@@ -213,9 +230,17 @@ export class Graph {
    *     given node id as the source or target id.
    */
   getConnectedEdges(nodeId) {
-    return this.edges_.filter((edge) => {
-      return edge.isConnectedToNode(nodeId);
-    }).map(e => e.id);
+    // return this.edges_.filter((edge) => {
+    //   return edge.isConnectedToNode(nodeId);
+    // }).map(e => e.id);
+
+    const edges = this.connectedEdges_.get(nodeId);
+    if (!edges) {
+      return [];
+    }
+    const newEdges = [...edges].filter(e => this.hasEdge(e.id));
+    this.connectedEdges_.set(nodeId, newEdges);
+    return newEdges.map(e => e.id);
   }
 
   /**

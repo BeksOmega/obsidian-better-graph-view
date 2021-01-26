@@ -208,7 +208,7 @@ export class NotesGraphBuilder extends GraphBuilder {
       }
       cache.links.forEach((ref) => {
         const linkId = linkCacheToId(ref);
-        if (!createdFileIds.has(linkId)) {
+        if (!createdFileIds.has(linkId) || linkId == fileId) {
           return;
         }
         const edgeId = getEdgeId(fileId, linkId);
@@ -390,7 +390,6 @@ export class NotesGraphBuilder extends GraphBuilder {
     query.run(nodes).forEach((node) => {
       newNodes.add(node.getNode());
     });
-    console.log('before', nodes, 'after', newNodes);
     this.graph_.forEachNode((node) => {
       if (node instanceof  NoteNode && !newNodes.has(node)) {
         this.graph_.removeNode(node.id);

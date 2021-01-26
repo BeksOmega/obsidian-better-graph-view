@@ -72,13 +72,10 @@ export class Node {
      * The pixi container holding all of the node's rendered elements.
      * The node must own the container to allow for the builder and layout to
      * bind mouse events to it.
-     * @type {!PIXI.Container}
+     * @type {PIXI.Container}
      * @private
      */
-    this.container_ = new PIXI.Container();
-    this.container_.zIndex = 1;
-    this.container_.sortableChildren = true;
-    this.container_.interactive = true;
+    this.container_ = null;
 
     /**
      * Css classes associated with this node.
@@ -94,6 +91,12 @@ export class Node {
    * @return {!PIXI.Container}
    */
   getContainer() {
+    if (!this.container_) {
+      this.container_ = new PIXI.Container();
+      this.container_.zIndex = 1;
+      this.container_.sortableChildren = true;
+      this.container_.interactive = true;
+    }
     return this.container_;
   }
 
